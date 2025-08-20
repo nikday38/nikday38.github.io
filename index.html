@@ -280,6 +280,21 @@
             font-size: 12px;
             color: #004085;
         }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #007bff;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
     </style>
 </head>
 <body>
@@ -290,8 +305,8 @@
         </div>
 
         <div class="info-panel">
-            <h4>ℹ️ Оптимизированный анализ</h4>
-            <p>Алгоритм автоматически оптимизирует размер изображений для быстрой и точной обработки. Максимальный размер обработки: 1200x1200px.</p>
+            <h4>ℹ️ Безопасный анализ</h4>
+            <p>Алгоритм использует поэтапную обработку для работы с изображениями любого размера. Максимальная надежность.</p>
         </div>
 
         <div class="upload-section">
@@ -318,8 +333,8 @@
             
             <div class="slider-container">
                 <label>
-                    Чувствительность: <span class="slider-value" id="sensitivity-value">20</span>%
-                    <input type="range" id="sensitivity" min="5" max="50" value="20" onchange="updateSliderValue('sensitivity', 'sensitivity-value')">
+                    Чувствительность: <span class="slider-value" id="sensitivity-value">25</span>%
+                    <input type="range" id="sensitivity" min="5" max="50" value="25" onchange="updateSliderValue('sensitivity', 'sensitivity-value')">
                 </label>
                 <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
                     Минимальная разница для обнаружения
@@ -328,24 +343,33 @@
 
             <div class="slider-container">
                 <label>
-                    Группировка: <span class="slider-value" id="grouping-value">8</span>px
-                    <input type="range" id="grouping" min="1" max="20" value="8" onchange="updateSliderValue('grouping', 'grouping-value')">
+                    Размер анализа: <span class="slider-value" id="scale-value">0.5</span>
+                    <input type="range" id="scale" min="0.1" max="1" step="0.1" value="0.5" onchange="updateSliderValue('scale', 'scale-value')">
                 </label>
                 <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
-                    Радиус объединения близких изменений
+                    Меньше = быстрее, Больше = точнее
                 </div>
             </div>
 
             <div class="button-group">
-                <button class="button" id="compare-btn" onclick="compareImages()" disabled>Запустить анализ</button>
+                <button class="button" id="compare-btn" onclick="startAnalysis()" disabled>Запустить анализ</button>
                 <button class="button button-secondary" onclick="resetAnalysis()">Очистить</button>
+            </div>
+        </div>
+
+        <div id="progress-container" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div style="text-align: center; color: #6c757d; font-size: 14px;">
+                <span id="progress-text">Подготовка...</span>
             </div>
         </div>
 
         <div id="loading" style="display: none;">
             <div class="loading">
                 <div class="spinner"></div>
-                <p>Выполняется анализ... Подождите</p>
+                <p id="loading-text">Выполняется анализ...</p>
             </div>
         </div>
 
@@ -370,8 +394,8 @@
                             <div class="stat-label">Измененные</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value" id="stat-areas">0</div>
-                            <div class="stat-label">Области</div>
+                            <div class="stat-value" id="stat-time">0</div>
+                            <div class="stat-label">Время, сек</div>
                         </div>
                     </div>
                 </div>
@@ -401,7 +425,7 @@
         let image1 = null;
         let image2 = null;
         let analysisResult = null;
-        const MAX_DIMENSION = 1200; // Максимальный размер для обработки
+        let startTime = 0;
 
         function updateSliderValue(sliderId, valueId) {
             const slider = document.getElementById(sliderId);
@@ -429,11 +453,6 @@
                 img.onload = function() {
                     info.innerHTML = `${img.naturalWidth}×${img.naturalHeight}px · ${Math.round(file.size/1024)}KB`;
                     info.style.display = 'block';
-                    
-                    // Проверяем размер изображения
-                    if (img.naturalWidth > 2000 || img.naturalHeight > 2000) {
-                        showError(`Большое изображение (${img.naturalWidth}×${img.naturalHeight}px). Будет оптимизировано для анализа.`);
-                    }
                 };
                 
                 preview.innerHTML = '';
@@ -466,196 +485,146 @@
             errorDiv.style.display = 'none';
         }
 
-        function getOptimalDimensions(img1, img2) {
-            // Вычисляем оптимальный размер для обработки
-            const maxDim = Math.max(
-                Math.min(img1.naturalWidth, MAX_DIMENSION),
-                Math.min(img2.naturalWidth, MAX_DIMENSION),
-                Math.min(img1.naturalHeight, MAX_DIMENSION),
-                Math.min(img2.naturalHeight, MAX_DIMENSION)
-            );
-            
-            // Сохраняем пропорции
-            const ratio1 = img1.naturalWidth / img1.naturalHeight;
-            const ratio2 = img2.naturalWidth / img2.naturalHeight;
-            
-            let width, height;
-            
-            if (ratio1 > ratio2) {
-                width = Math.min(maxDim, img1.naturalWidth, img2.naturalWidth);
-                height = Math.round(width / ratio1);
-            } else {
-                height = Math.min(maxDim, img1.naturalHeight, img2.naturalHeight);
-                width = Math.round(height * ratio1);
-            }
-            
-            // Обеспечиваем минимальный размер
-            width = Math.max(100, width);
-            height = Math.max(100, height);
-            
-            console.log(`Оптимальный размер: ${width}×${height}px`);
-            return { width, height };
+        function updateProgress(percent, text) {
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-text').textContent = text;
         }
 
-        function processImageBlock(ctx, imageData, blockSize, sensitivity) {
-            const data = imageData.data;
-            const width = imageData.width;
-            const height = imageData.height;
-            const result = new Uint8ClampedArray(width * height);
-            
-            // Обрабатываем изображение блоками для экономии памяти
-            for (let y = 0; y < height; y += blockSize) {
-                for (let x = 0; x < width; x += blockSize) {
-                    const blockEndX = Math.min(x + blockSize, width);
-                    const blockEndY = Math.min(y + blockSize, height);
-                    
-                    for (let by = y; by < blockEndY; by++) {
-                        for (let bx = x; bx < blockEndX; bx++) {
-                            const idx = (by * width + bx) * 4;
-                            const pixelIdx = by * width + bx;
-                            
-                            const r = data[idx];
-                            const g = data[idx + 1];
-                            const b = data[idx + 2];
-                            
-                            // Простая обработка (заглушка)
-                            result[pixelIdx] = 0;
-                        }
-                    }
-                }
-            }
-            
-            return result;
+        function startAnalysis() {
+            if (!image1 || !image2) return;
+
+            startTime = Date.now();
+            const sensitivity = parseInt(document.getElementById('sensitivity').value) / 100;
+            const scale = parseFloat(document.getElementById('scale').value);
+
+            // Показываем прогресс
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            hideError();
+
+            // Запускаем асинхронно чтобы не блокировать интерфейс
+            setTimeout(() => {
+                analyzeImages(sensitivity, scale);
+            }, 100);
         }
 
-        function findDifferences(data1, data2, width, height, sensitivity) {
-            const diffMap = new Uint8ClampedArray(width * height);
-            let differentPixels = 0;
-            const blockSize = 100; // Обрабатываем по 100 строк за раз
-            
-            for (let y = 0; y < height; y += blockSize) {
-                const blockEnd = Math.min(y + blockSize, height);
+        function analyzeImages(sensitivity, scale) {
+            try {
+                updateProgress(10, 'Подготовка изображений...');
+
+                // Создаем canvas с уменьшенным размером
+                const canvas1 = document.createElement('canvas');
+                const canvas2 = document.createElement('canvas');
+                const ctx1 = canvas1.getContext('2d');
+                const ctx2 = canvas2.getContext('2d');
+
+                // Вычисляем размер с масштабированием
+                const width = Math.floor(Math.min(image1.naturalWidth, image2.naturalWidth) * scale);
+                const height = Math.floor(Math.min(image1.naturalHeight, image2.naturalHeight) * scale);
+
+                console.log(`Анализ: ${width}×${height}px (масштаб: ${scale})`);
+
+                canvas1.width = canvas2.width = width;
+                canvas1.height = canvas2.height = height;
+
+                updateProgress(30, 'Обработка первого изображения...');
+                ctx1.drawImage(image1, 0, 0, width, height);
+
+                updateProgress(50, 'Обработка второго изображения...');
+                ctx2.drawImage(image2, 0, 0, width, height);
+
+                updateProgress(70, 'Сравнение пикселей...');
                 
-                for (let row = y; row < blockEnd; row++) {
-                    for (let x = 0; x < width; x++) {
-                        const idx = (row * width + x) * 4;
-                        const pixelIdx = row * width + x;
+                // Получаем данные небольшими порциями
+                let differentPixels = 0;
+                const totalPixels = width * height;
+                const blockSize = Math.floor(height / 10); // 10 блоков по вертикали
+
+                // Создаем canvas для результата
+                const resultCanvas = document.createElement('canvas');
+                resultCanvas.width = width;
+                resultCanvas.height = height;
+                const resultCtx = resultCanvas.getContext('2d');
+                resultCtx.drawImage(canvas1, 0, 0);
+
+                // Обрабатываем по блокам
+                for (let y = 0; y < height; y += blockSize) {
+                    const blockHeight = Math.min(blockSize, height - y);
+                    
+                    const imageData1 = ctx1.getImageData(0, y, width, blockHeight);
+                    const imageData2 = ctx2.getImageData(0, y, width, blockHeight);
+                    const data1 = imageData1.data;
+                    const data2 = imageData2.data;
+
+                    // Создаем ImageData для результата
+                    const resultImageData = resultCtx.getImageData(0, y, width, blockHeight);
+                    const resultData = resultImageData.data;
+
+                    for (let i = 0; i < data1.length; i += 4) {
+                        const pixelIndex = i / 4;
+                        const row = y + Math.floor(pixelIndex / width);
+                        const col = pixelIndex % width;
+
+                        const r1 = data1[i];
+                        const g1 = data1[i + 1];
+                        const b1 = data1[i + 2];
                         
-                        const r1 = data1[idx];
-                        const g1 = data1[idx + 1];
-                        const b1 = data1[idx + 2];
-                        
-                        const r2 = data2[idx];
-                        const g2 = data2[idx + 1];
-                        const b2 = data2[idx + 2];
-                        
+                        const r2 = data2[i];
+                        const g2 = data2[i + 1];
+                        const b2 = data2[i + 2];
+
                         const colorDiff = (
                             Math.abs(r1 - r2) + 
                             Math.abs(g1 - g2) + 
                             Math.abs(b1 - b2)
                         ) / (3 * 255);
-                        
+
                         if (colorDiff > sensitivity) {
-                            diffMap[pixelIdx] = 255;
                             differentPixels++;
+                            // Помечаем различие красным
+                            resultData[i] = 255;     // R
+                            resultData[i + 1] = 100; // G
+                            resultData[i + 2] = 100; // B
                         }
                     }
+
+                    // Обновляем результат
+                    resultCtx.putImageData(resultImageData, 0, y);
+
+                    // Обновляем прогресс
+                    const progress = 70 + Math.floor((y / height) * 25);
+                    updateProgress(progress, `Обработка: ${Math.round((y / height) * 100)}%`);
                 }
-            }
-            
-            return { diffMap, differentPixels };
-        }
 
-        function compareImages() {
-            if (!image1 || !image2) return;
+                updateProgress(95, 'Завершение анализа...');
 
-            const sensitivity = parseInt(document.getElementById('sensitivity').value) / 100;
-            const groupingRadius = parseInt(document.getElementById('grouping').value);
+                // Вычисляем схожесть
+                const similarity = ((totalPixels - differentPixels) / totalPixels) * 100;
+                const similarityRounded = Math.max(0, Math.min(100, Math.round(similarity * 10) / 10));
+                const analysisTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').style.display = 'none';
-            hideError();
+                analysisResult = {
+                    similarity: similarityRounded,
+                    diffCanvas: resultCanvas,
+                    totalPixels: totalPixels,
+                    changedPixels: differentPixels,
+                    analysisTime: analysisTime,
+                    resolution: `${width}×${height}px`
+                };
 
-            setTimeout(() => {
-                try {
-                    // Получаем оптимальные размеры
-                    const { width, height } = getOptimalDimensions(image1, image2);
-                    
-                    console.log(`Начало анализа: ${width}×${height}px`);
-                    
-                    const canvas1 = document.createElement('canvas');
-                    const canvas2 = document.createElement('canvas');
-                    const ctx1 = canvas1.getContext('2d');
-                    const ctx2 = canvas2.getContext('2d');
-
-                    canvas1.width = canvas2.width = width;
-                    canvas1.height = canvas2.height = height;
-
-                    // Рисуем с оптимальным размером
-                    ctx1.drawImage(image1, 0, 0, width, height);
-                    ctx2.drawImage(image2, 0, 0, width, height);
-
-                    const imageData1 = ctx1.getImageData(0, 0, width, height);
-                    const imageData2 = ctx2.getImageData(0, 0, width, height);
-
-                    // Находим различия с поэтапной обработкой
-                    const { diffMap, differentPixels } = findDifferences(
-                        imageData1.data, 
-                        imageData2.data, 
-                        width, 
-                        height, 
-                        sensitivity
-                    );
-
-                    // Создаем визуализацию
-                    const resultCanvas = document.createElement('canvas');
-                    resultCanvas.width = width;
-                    resultCanvas.height = height;
-                    const resultCtx = resultCanvas.getContext('2d');
-                    
-                    // Рисуем оригинальное изображение
-                    resultCtx.drawImage(canvas1, 0, 0);
-                    
-                    // Подсвечиваем различия
-                    resultCtx.fillStyle = 'rgba(220, 53, 69, 0.3)';
-                    
-                    // Простая визуализация - подсвечиваем все различия
-                    const imageData = resultCtx.getImageData(0, 0, width, height);
-                    const resultData = imageData.data;
-                    
-                    for (let i = 0; i < diffMap.length; i++) {
-                        if (diffMap[i] === 255) {
-                            const idx = i * 4;
-                            resultData[idx] = 255;     // R
-                            resultData[idx + 1] = 100; // G
-                            resultData[idx + 2] = 100; // B
-                        }
-                    }
-                    
-                    resultCtx.putImageData(imageData, 0, 0);
-
-                    // Вычисляем схожесть
-                    const totalPixels = width * height;
-                    const similarity = ((totalPixels - differentPixels) / totalPixels) * 100;
-                    const similarityRounded = Math.max(0, Math.min(100, Math.round(similarity * 10) / 10));
-
-                    analysisResult = {
-                        similarity: similarityRounded,
-                        diffCanvas: resultCanvas,
-                        areas: Math.ceil(differentPixels / 100), // Примерная оценка
-                        totalPixels: totalPixels,
-                        changedPixels: differentPixels
-                    };
-
+                updateProgress(100, 'Анализ завершен!');
+                setTimeout(() => {
+                    document.getElementById('progress-container').style.display = 'none';
                     displayResult();
+                }, 500);
 
-                } catch (error) {
-                    console.error('Analysis error:', error);
-                    showError('Ошибка анализа: ' + error.message + '. Попробуйте изображения меньшего размера.');
-                } finally {
-                    document.getElementById('loading').style.display = 'none';
-                }
-            }, 100);
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showError('Ошибка анализа: ' + error.message);
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('loading').style.display = 'none';
+            }
         }
 
         function displayResult() {
@@ -667,30 +636,24 @@
             const detailedStats = document.getElementById('detailed-stats');
             const statPixels = document.getElementById('stat-pixels');
             const statDiff = document.getElementById('stat-diff');
-            const statAreas = document.getElementById('stat-areas');
+            const statTime = document.getElementById('stat-time');
 
             similarityScore.textContent = analysisResult.similarity + '%';
             statPixels.textContent = analysisResult.totalPixels.toLocaleString();
             statDiff.textContent = analysisResult.changedPixels.toLocaleString();
-            statAreas.textContent = analysisResult.areas;
+            statTime.textContent = analysisResult.analysisTime;
             
             let verdictText = '';
             let verdictClass = '';
             
-            if (analysisResult.similarity >= 98) {
-                verdictText = 'ПОЧТИ ИДЕНТИЧНЫЕ';
-                verdictClass = 'low-similarity';
-            } else if (analysisResult.similarity >= 90) {
-                verdictText = 'НЕЗНАЧИТЕЛЬНЫЕ РАЗЛИЧИЯ';
+            if (analysisResult.similarity >= 95) {
+                verdictText = 'ВЫСОКАЯ СХОЖЕСТЬ';
                 verdictClass = 'low-similarity';
             } else if (analysisResult.similarity >= 80) {
-                verdictText = 'ЗАМЕТНЫЕ ИЗМЕНЕНИЯ';
-                verdictClass = 'medium-similarity';
-            } else if (analysisResult.similarity >= 60) {
-                verdictText = 'СУЩЕСТВЕННЫЕ РАЗЛИЧИЯ';
+                verdictText = 'СРЕДНЯЯ СХОЖЕСТЬ';
                 verdictClass = 'medium-similarity';
             } else {
-                verdictText = 'ЗНАЧИТЕЛЬНЫЕ МОДИФИКАЦИИ';
+                verdictText = 'НИЗКАЯ СХОЖЕСТЬ';
                 verdictClass = 'high-similarity';
             }
 
@@ -706,14 +669,18 @@
 
             // Детальная статистика
             detailedStats.innerHTML = `
-                <p><strong>Статистика анализа:</strong></p>
-                <p>• Размер анализа: ${analysisResult.totalPixels.toLocaleString()} пикселей</p>
-                <p>• Обнаружено изменений: ${analysisResult.changedPixels.toLocaleString()} пикселей</p>
+                <p><strong>Результаты анализа:</strong></p>
+                <p>• Разрешение анализа: ${analysisResult.resolution}</p>
+                <p>• Всего проанализировано пикселей: ${analysisResult.totalPixels.toLocaleString()}</p>
+                <p>• Найдено различий: ${analysisResult.changedPixels.toLocaleString()} пикселей</p>
                 <p>• Процент различий: ${(100 - analysisResult.similarity).toFixed(1)}%</p>
+                <p>• Время анализа: ${analysisResult.analysisTime} секунд</p>
                 <p>• Чувствительность: ${document.getElementById('sensitivity-value').textContent}%</p>
+                <p>• Масштаб: ${document.getElementById('scale-value').textContent}</p>
             `;
 
             document.getElementById('result').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
         }
 
         function resetAnalysis() {
@@ -725,6 +692,7 @@
             document.getElementById('info1').style.display = 'none';
             document.getElementById('info2').style.display = 'none';
             document.getElementById('result').style.display = 'none';
+            document.getElementById('progress-container').style.display = 'none';
             document.getElementById('compare-btn').disabled = true;
             hideError();
         }
