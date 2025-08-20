@@ -3,41 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copyright Control Pro</title>
+    <title>Copyright Control | Профессиональный анализ</title>
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Roboto', 'Arial', sans-serif;
             margin: 0;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8f9fa;
             min-height: 100vh;
-            color: #333;
+            color: #2c3e50;
+            line-height: 1.6;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
         }
         .header h1 {
             color: #2c3e50;
             margin: 0;
-            font-size: 2.5em;
+            font-size: 2.2em;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        .header p {
+            color: #6c757d;
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
         }
         .upload-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 30px;
+            margin-bottom: 40px;
         }
         @media (max-width: 768px) {
             .upload-section {
@@ -45,121 +58,174 @@
             }
         }
         .upload-box {
-            border: 3px dashed #3498db;
-            border-radius: 15px;
+            border: 2px dashed #dee2e6;
+            border-radius: 6px;
             padding: 30px;
             text-align: center;
             background: #f8f9fa;
             cursor: pointer;
-            transition: all 0.3s ease;
-            min-height: 200px;
+            transition: all 0.2s ease;
+            min-height: 250px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
         }
+        .upload-box:hover {
+            border-color: #007bff;
+            background: #e8f4ff;
+        }
+        .upload-box i {
+            font-size: 36px;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
         .preview-container {
-            margin-top: 15px;
+            margin-top: 20px;
             text-align: center;
         }
         .preview-container img {
             max-width: 100%;
-            max-height: 150px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-height: 200px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
         }
         .controls {
             background: #f8f9fa;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
+            padding: 30px;
+            border-radius: 6px;
+            margin: 30px 0;
+            border: 1px solid #e9ecef;
+        }
+        .controls h3 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: 400;
+            font-size: 1.3em;
         }
         .slider-container {
-            margin: 15px 0;
+            margin: 20px 0;
         }
         .slider-container label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-weight: 500;
-            color: #2c3e50;
+            color: #495057;
+            font-size: 14px;
         }
         .slider-value {
             display: inline-block;
             min-width: 40px;
             text-align: right;
-            font-weight: bold;
-            color: #3498db;
+            font-weight: 600;
+            color: #007bff;
+            font-family: 'Monaco', 'Consolas', monospace;
         }
         input[type="range"] {
             width: 100%;
-            margin: 10px 0;
+            margin: 12px 0;
+            height: 4px;
+            background: #dee2e6;
+            border-radius: 2px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
         }
         .button {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            background: #007bff;
             color: white;
-            padding: 15px 30px;
+            padding: 12px 28px;
             border: none;
-            border-radius: 50px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            margin: 10px 5px;
-            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            min-width: 160px;
         }
         .button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+            background: #0056b3;
+            transform: translateY(-1px);
         }
         .button:disabled {
-            background: #bdc3c7;
+            background: #6c757d;
             cursor: not-allowed;
         }
         .button-secondary {
-            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            background: #6c757d;
+        }
+        .button-secondary:hover {
+            background: #495057;
         }
         .results-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 30px;
+            gap: 30px;
+            margin-top: 40px;
         }
         .result-card {
             background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            text-align: center;
+            padding: 25px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .result-card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 400;
+            font-size: 1.2em;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 10px;
         }
         .similarity-score {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin: 10px 0;
+            font-size: 2.2em;
+            font-weight: 300;
+            margin: 15px 0;
+            text-align: center;
+            font-family: 'Monaco', 'Consolas', monospace;
         }
-        .high-similarity { color: #e74c3c; }
-        .medium-similarity { color: #f39c12; }
-        .low-similarity { color: #27ae60; }
+        .high-similarity { color: #dc3545; }
+        .medium-similarity { color: #fd7e14; }
+        .low-similarity { color: #28a745; }
         .verdict {
-            font-size: 1.2em;
-            font-weight: 600;
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
+            font-size: 1.1em;
+            font-weight: 500;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            text-align: center;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
         }
         canvas {
             max-width: 100%;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            margin: 15px 0;
         }
         .loading {
             text-align: center;
-            padding: 30px;
+            padding: 40px;
         }
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            width: 35px;
+            height: 35px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
@@ -169,44 +235,76 @@
             100% { transform: rotate(360deg); }
         }
         .error {
-            background: #e74c3c;
-            color: white;
+            background: #f8d7da;
+            color: #721c24;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 4px;
             text-align: center;
             margin: 20px 0;
+            border: 1px solid #f5c6cb;
+            display: none;
         }
-        .info {
-            background: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
+        .info-panel {
+            background: #e8f4ff;
+            color: #004085;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 30px 0;
+            border: 1px solid #b8daff;
             font-size: 14px;
+        }
+        .info-panel h4 {
+            margin-bottom: 10px;
+            color: #004085;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 300;
+            color: #007bff;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔍 Copyright Control Pro</h1>
-            <p>Профессиональный анализ изображений для обнаружения плагиата</p>
+            <h1>Copyright Control</h1>
+            <p>Профессиональная система анализа цифровых изображений</p>
         </div>
 
-        <div class="info">
-            <strong>🚀 Улучшенный алгоритм:</strong> Использует адаптивные пороги, размытие и морфологические операции для точного обнаружения реальных различий без шума.
+        <div class="info-panel">
+            <h4>ℹ️ О системе</h4>
+            <p>Алгоритм настроен для обнаружения значимых модификаций изображений. Оптимизирован для выявления крупных областей изменений (пикселизация, ретушь, модификации) при игнорировании незначительных артефактов.</p>
         </div>
 
         <div class="upload-section">
             <div class="upload-box" onclick="document.getElementById('file-input1').click()">
-                <div>📁</div>
-                <p>Загрузить исходное изображение</p>
+                <div>📄</div>
+                <p>Исходное изображение</p>
                 <div class="preview-container" id="preview1"></div>
             </div>
 
             <div class="upload-box" onclick="document.getElementById('file-input2').click()">
-                <div>📁</div>
-                <p>Загрузить изображение для проверки</p>
+                <div>📄</div>
+                <p>Проверяемое изображение</p>
                 <div class="preview-container" id="preview2"></div>
             </div>
         </div>
@@ -215,71 +313,96 @@
         <input type="file" id="file-input2" accept="image/*" onchange="handleFileSelect(this, 'preview2')" style="display: none;">
 
         <div class="controls">
-            <h3>⚙️ Настройки точности</h3>
+            <h3>Параметры анализа</h3>
             
             <div class="slider-container">
                 <label>
-                    Порог различий: <span class="slider-value" id="threshold-value">50</span>%
-                    <input type="range" id="threshold" min="10" max="100" value="50" onchange="updateSliderValue('threshold', 'threshold-value')">
+                    Чувствительность к изменениям: <span class="slider-value" id="sensitivity-value">3</span>
+                    <input type="range" id="sensitivity" min="1" max="10" value="3" onchange="updateSliderValue('sensitivity', 'sensitivity-value')">
                 </label>
+                <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+                    Низкая → Высокая (рекомендуется: 3-4 для портретов)
+                </div>
             </div>
 
             <div class="slider-container">
                 <label>
-                    Чувствительность: <span class="slider-value" id="sensitivity-value">5</span>
-                    <input type="range" id="sensitivity" min="1" max="20" value="5" onchange="updateSliderValue('sensitivity', 'sensitivity-value')">
+                    Минимальный размер области: <span class="slider-value" id="min-area-value">200</span>px²
+                    <input type="range" id="min-area" min="50" max="1000" value="200" onchange="updateSliderValue('min-area', 'min-area-value')">
                 </label>
+                <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+                    Игнорировать мелкие изменения (оптимально для лиц: 150-300)
+                </div>
             </div>
 
             <div class="slider-container">
                 <label>
-                    Минимальный размер области: <span class="slider-value" id="min-area-value">100</span>px²
-                    <input type="range" id="min-area" min="10" max="500" value="100" onchange="updateSliderValue('min-area', 'min-area-value')">
+                    Порог значимости: <span class="slider-value" id="threshold-value">15</span>%
+                    <input type="range" id="threshold" min="5" max="50" value="15" onchange="updateSliderValue('threshold', 'threshold-value')">
                 </label>
+                <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+                    Минимальная разница для обнаружения (рекомендуется: 10-20%)
+                </div>
             </div>
 
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="button" id="compare-btn" onclick="compareImages()" disabled>🔍 Начать анализ</button>
-                <button class="button button-secondary" onclick="resetAnalysis()">🔄 Сбросить</button>
+            <div class="button-group">
+                <button class="button" id="compare-btn" onclick="compareImages()" disabled>Запустить анализ</button>
+                <button class="button button-secondary" onclick="resetAnalysis()">Очистить</button>
             </div>
         </div>
 
         <div id="loading" style="display: none;">
             <div class="loading">
                 <div class="spinner"></div>
-                <p>Выполняется профессиональный анализ изображений...</p>
-                <p>Это может занять несколько секунд</p>
+                <p>Выполняется глубокий анализ изображений...</p>
+                <p style="color: #6c757d; font-size: 14px;">Обработка структурных особенностей и областей интереса</p>
             </div>
         </div>
 
         <div id="error-message" class="error" style="display: none;"></div>
 
         <div id="result" style="display: none;">
-            <h2 style="text-align: center; margin-bottom: 30px;">📊 Результаты анализа</h2>
+            <h2 style="text-align: center; margin-bottom: 30px; font-weight: 300; color: #2c3e50;">Результаты экспертизы</h2>
             
             <div class="results-grid">
                 <div class="result-card">
-                    <h3>Общая схожесть</h3>
+                    <h3>Метрика схожести</h3>
                     <div class="similarity-score" id="similarity-score">0%</div>
                     <div class="verdict" id="verdict"></div>
-                    <p>На основе анализа пикселей и структурных особенностей</p>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-pixels">0</div>
+                            <div class="stat-label">Всего пикселей</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-diff">0</div>
+                            <div class="stat-label">Измененные</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-areas">0</div>
+                            <div class="stat-label">Области</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="result-card">
                     <h3>Визуализация различий</h3>
                     <canvas id="diff-canvas"></canvas>
-                    <p>Красным выделены значимые области различий</p>
+                    <p style="text-align: center; color: #6c757d; font-size: 13px; margin-top: 10px;">
+                        Красным выделены значимые области модификаций
+                    </p>
                 </div>
             </div>
 
-            <div class="result-card" style="margin-top: 20px;">
-                <h3>📈 Детальная статистика</h3>
-                <div id="stats" style="text-align: left; line-height: 1.6;"></div>
+            <div class="result-card" style="margin-top: 30px;">
+                <h3>Детальный отчет</h3>
+                <div id="detailed-stats" style="line-height: 1.8; font-size: 14px;"></div>
             </div>
 
-            <div style="text-align: center; margin-top: 30px;">
-                <button class="button" onclick="saveResult()">💾 Сохранить результат</button>
-                <button class="button button-secondary" onclick="resetAnalysis()">🔄 Новый анализ</button>
+            <div class="button-group" style="margin-top: 30px;">
+                <button class="button" onclick="saveResult()">Экспорт отчета</button>
+                <button class="button button-secondary" onclick="resetAnalysis()">Новый анализ</button>
             </div>
         </div>
     </div>
@@ -298,7 +421,7 @@
         function handleFileSelect(input, previewId) {
             const file = input.files[0];
             if (!file || !file.type.match('image.*')) {
-                showError('Пожалуйста, выберите файл изображения');
+                showError('Выберите корректный файл изображения');
                 return;
             }
 
@@ -309,7 +432,10 @@
                 const img = document.createElement('img');
                 img.src = e.target.result;
                 img.style.maxWidth = '100%';
-                img.style.maxHeight = '150px';
+                img.style.maxHeight = '200px';
+                img.onload = function() {
+                    console.log(`Изображение ${previewId}: ${img.naturalWidth}x${img.naturalHeight}`);
+                };
                 
                 preview.innerHTML = '';
                 preview.appendChild(img);
@@ -341,126 +467,108 @@
             errorDiv.style.display = 'none';
         }
 
-        function applyGaussianBlur(ctx, imageData, radius) {
-            const data = imageData.data;
-            const width = imageData.width;
-            const height = imageData.height;
-            const tempData = new Uint8ClampedArray(data);
+        function applyStructuralAnalysis(imageData1, imageData2, width, height, sensitivity, threshold) {
+            const data1 = imageData1.data;
+            const data2 = imageData2.data;
+            const diffMap = new Uint8ClampedArray(width * height);
+            const blockSize = Math.max(2, Math.floor(sensitivity));
             
-            const kernel = createGaussianKernel(radius);
-            const half = Math.floor(kernel.length / 2);
-            
-            // Apply horizontal blur
-            for (let y = 0; y < height; y++) {
-                for (let x = half; x < width - half; x++) {
-                    let r = 0, g = 0, b = 0;
-                    for (let i = -half; i <= half; i++) {
-                        const idx = ((y * width) + (x + i)) * 4;
-                        const weight = kernel[i + half];
-                        r += tempData[idx] * weight;
-                        g += tempData[idx + 1] * weight;
-                        b += tempData[idx + 2] * weight;
+            // Анализ блоками для обнаружения структурных изменений
+            for (let y = 0; y < height - blockSize; y += blockSize) {
+                for (let x = 0; x < width - blockSize; x += blockSize) {
+                    let blockDiff = 0;
+                    let blockPixels = 0;
+                    
+                    // Анализируем блок
+                    for (let dy = 0; dy < blockSize; dy++) {
+                        for (let dx = 0; dx < blockSize; dx++) {
+                            const px = x + dx;
+                            const py = y + dy;
+                            const idx = (py * width + px) * 4;
+                            
+                            const r1 = data1[idx];
+                            const g1 = data1[idx + 1];
+                            const b1 = data1[idx + 2];
+                            
+                            const r2 = data2[idx];
+                            const g2 = data2[idx + 1];
+                            const b2 = data2[idx + 2];
+                            
+                            const diff = Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
+                            blockDiff += diff;
+                            blockPixels++;
+                        }
                     }
-                    const idx = ((y * width) + x) * 4;
-                    data[idx] = r;
-                    data[idx + 1] = g;
-                    data[idx + 2] = b;
+                    
+                    // Средняя разница в блоке
+                    const avgDiff = blockDiff / (blockPixels * 3 * 255);
+                    
+                    // Помечаем блок как измененный если превышает порог
+                    if (avgDiff > threshold / 100) {
+                        for (let dy = 0; dy < blockSize; dy++) {
+                            for (let dx = 0; dx < blockSize; dx++) {
+                                const px = x + dx;
+                                const py = y + dy;
+                                if (px < width && py < height) {
+                                    diffMap[py * width + px] = 255;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             
-            // Apply vertical blur
-            const tempData2 = new Uint8ClampedArray(data);
-            for (let y = half; y < height - half; y++) {
-                for (let x = 0; x < width; x++) {
-                    let r = 0, g = 0, b = 0;
-                    for (let i = -half; i <= half; i++) {
-                        const idx = (((y + i) * width) + x) * 4;
-                        const weight = kernel[i + half];
-                        r += tempData2[idx] * weight;
-                        g += tempData2[idx + 1] * weight;
-                        b += tempData2[idx + 2] * weight;
-                    }
-                    const idx = ((y * width) + x) * 4;
-                    data[idx] = r;
-                    data[idx + 1] = g;
-                    data[idx + 2] = b;
-                }
-            }
-            
-            return imageData;
+            return diffMap;
         }
 
-        function createGaussianKernel(radius) {
-            const size = radius * 2 + 1;
-            const kernel = new Array(size);
-            const sigma = radius / 3;
-            let sum = 0;
-            
-            for (let i = -radius; i <= radius; i++) {
-                const weight = Math.exp(-(i * i) / (2 * sigma * sigma)) / (Math.sqrt(2 * Math.PI) * sigma);
-                kernel[i + radius] = weight;
-                sum += weight;
-            }
-            
-            // Normalize kernel
-            for (let i = 0; i < size; i++) {
-                kernel[i] /= sum;
-            }
-            
-            return kernel;
-        }
-
-        function findContours(binaryData, width, height, minArea) {
+        function findSignificantAreas(diffMap, width, height, minArea) {
             const visited = new Array(width * height).fill(false);
-            const contours = [];
+            const areas = [];
             
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     const idx = y * width + x;
-                    if (binaryData[idx] === 255 && !visited[idx]) {
-                        const contour = [];
+                    if (diffMap[idx] === 255 && !visited[idx]) {
+                        const area = [];
                         const queue = [[x, y]];
                         visited[idx] = true;
                         
                         while (queue.length > 0) {
                             const [cx, cy] = queue.shift();
-                            contour.push([cx, cy]);
+                            area.push([cx, cy]);
                             
-                            // Check 8-connected neighbors
-                            for (let dy = -1; dy <= 1; dy++) {
-                                for (let dx = -1; dx <= 1; dx++) {
-                                    if (dx === 0 && dy === 0) continue;
-                                    
-                                    const nx = cx + dx;
-                                    const ny = cy + dy;
-                                    
-                                    if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                                        const nidx = ny * width + nx;
-                                        if (binaryData[nidx] === 255 && !visited[nidx]) {
-                                            visited[nidx] = true;
-                                            queue.push([nx, ny]);
-                                        }
+                            // 4-связные соседи
+                            const neighbors = [[0,1],[1,0],[0,-1],[-1,0]];
+                            for (const [dx, dy] of neighbors) {
+                                const nx = cx + dx;
+                                const ny = cy + dy;
+                                
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    const nidx = ny * width + nx;
+                                    if (diffMap[nidx] === 255 && !visited[nidx]) {
+                                        visited[nidx] = true;
+                                        queue.push([nx, ny]);
                                     }
                                 }
                             }
                         }
                         
-                        if (contour.length >= minArea) {
-                            contours.push(contour);
+                        if (area.length >= minArea) {
+                            areas.push(area);
                         }
                     }
                 }
             }
             
-            return contours;
+            return areas;
         }
 
         function compareImages() {
             if (!image1 || !image2) return;
 
-            const threshold = parseInt(document.getElementById('threshold').value);
             const sensitivity = parseInt(document.getElementById('sensitivity').value);
             const minArea = parseInt(document.getElementById('min-area').value);
+            const threshold = parseInt(document.getElementById('threshold').value);
 
             document.getElementById('loading').style.display = 'block';
             document.getElementById('result').style.display = 'none';
@@ -468,105 +576,77 @@
 
             setTimeout(() => {
                 try {
-                    // Create canvases
                     const canvas1 = document.createElement('canvas');
                     const canvas2 = document.createElement('canvas');
                     const ctx1 = canvas1.getContext('2d');
                     const ctx2 = canvas2.getContext('2d');
 
-                    // Set dimensions (resize for performance)
-                    const scale = 0.5;
+                    // Используем меньший масштаб для производительности
+                    const scale = 0.6;
                     const width = Math.min(image1.naturalWidth, image2.naturalWidth) * scale;
                     const height = Math.min(image1.naturalHeight, image2.naturalHeight) * scale;
 
                     canvas1.width = canvas2.width = width;
                     canvas1.height = canvas2.height = height;
 
-                    // Draw images
                     ctx1.drawImage(image1, 0, 0, width, height);
                     ctx2.drawImage(image2, 0, 0, width, height);
 
-                    // Get image data
                     const imageData1 = ctx1.getImageData(0, 0, width, height);
                     const imageData2 = ctx2.getImageData(0, 0, width, height);
 
-                    // Apply Gaussian blur to reduce noise
-                    const blurred1 = applyGaussianBlur(ctx1, imageData1, sensitivity);
-                    const blurred2 = applyGaussianBlur(ctx2, imageData2, sensitivity);
-
-                    const data1 = blurred1.data;
-                    const data2 = blurred2.data;
-
-                    // Create difference map
-                    const diffData = new Uint8ClampedArray(width * height);
-                    let differentPixels = 0;
-
-                    for (let i = 0; i < data1.length; i += 4) {
-                        const r1 = data1[i];
-                        const g1 = data1[i + 1];
-                        const b1 = data1[i + 2];
-                        
-                        const r2 = data2[i];
-                        const g2 = data2[i + 1];
-                        const b2 = data2[i + 2];
-
-                        // Calculate perceptual difference
-                        const diff = Math.sqrt(
-                            Math.pow(r1 - r2, 2) +
-                            Math.pow(g1 - g2, 2) +
-                            Math.pow(b1 - b2, 2)
-                        ) / Math.sqrt(3 * 255 * 255);
-
-                        if (diff > threshold / 100) {
-                            diffData[i / 4] = 255;
-                            differentPixels++;
-                        } else {
-                            diffData[i / 4] = 0;
-                        }
-                    }
-
-                    // Find significant contours
-                    const contours = findContours(diffData, width, height, minArea);
-
-                    // Calculate similarity
-                    const similarity = ((width * height - differentPixels) / (width * height)) * 100;
-                    const similarityRounded = Math.round(similarity * 100) / 100;
-
-                    // Create result visualization
+                    // Структурный анализ вместо поэлементного сравнения
+                    const diffMap = applyStructuralAnalysis(imageData1, imageData2, width, height, sensitivity, threshold);
+                    
+                    // Находим только значимые области
+                    const significantAreas = findSignificantAreas(diffMap, width, height, minArea);
+                    
+                    // Создаем визуализацию
                     const resultCanvas = document.createElement('canvas');
                     resultCanvas.width = width;
                     resultCanvas.height = height;
                     const resultCtx = resultCanvas.getContext('2d');
                     
-                    // Draw original image
+                    // Рисуем оригинальное изображение
                     resultCtx.drawImage(image1, 0, 0, width, height);
                     
-                    // Draw contours
-                    resultCtx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-                    resultCtx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+                    // Подсвечиваем значимые области
+                    resultCtx.fillStyle = 'rgba(220, 53, 69, 0.4)';
+                    resultCtx.strokeStyle = 'rgba(220, 53, 69, 0.8)';
                     resultCtx.lineWidth = 2;
                     
-                    for (const contour of contours) {
-                        resultCtx.beginPath();
-                        for (let i = 0; i < contour.length; i++) {
-                            const [x, y] = contour[i];
-                            if (i === 0) {
-                                resultCtx.moveTo(x, y);
-                            } else {
-                                resultCtx.lineTo(x, y);
-                            }
+                    for (const area of significantAreas) {
+                        // Находим bounding box для области
+                        let minX = width, minY = height, maxX = 0, maxY = 0;
+                        for (const [x, y] of area) {
+                            minX = Math.min(minX, x);
+                            minY = Math.min(minY, y);
+                            maxX = Math.max(maxX, x);
+                            maxY = Math.max(maxY, y);
                         }
-                        resultCtx.closePath();
-                        resultCtx.fill();
-                        resultCtx.stroke();
+                        
+                        // Рисуем прямоугольник вокруг значимой области
+                        resultCtx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+                        resultCtx.fillRect(minX, minY, maxX - minX, maxY - minY);
                     }
+
+                    // Вычисляем общую схожесть
+                    const totalPixels = width * height;
+                    let changedPixels = 0;
+                    for (let i = 0; i < diffMap.length; i++) {
+                        if (diffMap[i] === 255) changedPixels++;
+                    }
+                    
+                    const similarity = ((totalPixels - changedPixels) / totalPixels) * 100;
+                    const similarityRounded = Math.max(0, Math.min(100, Math.round(similarity * 10) / 10));
 
                     analysisResult = {
                         similarity: similarityRounded,
                         diffCanvas: resultCanvas,
-                        contours: contours.length,
-                        totalPixels: width * height,
-                        differentPixels: differentPixels
+                        areas: significantAreas.length,
+                        totalPixels: totalPixels,
+                        changedPixels: changedPixels,
+                        significantAreas: significantAreas
                     };
 
                     displayResult();
@@ -586,47 +666,58 @@
             const similarityScore = document.getElementById('similarity-score');
             const verdict = document.getElementById('verdict');
             const diffCanvas = document.getElementById('diff-canvas');
-            const stats = document.getElementById('stats');
+            const detailedStats = document.getElementById('detailed-stats');
+            const statPixels = document.getElementById('stat-pixels');
+            const statDiff = document.getElementById('stat-diff');
+            const statAreas = document.getElementById('stat-areas');
 
             similarityScore.textContent = analysisResult.similarity + '%';
+            statPixels.textContent = analysisResult.totalPixels.toLocaleString();
+            statDiff.textContent = analysisResult.changedPixels.toLocaleString();
+            statAreas.textContent = analysisResult.areas;
             
             let verdictText = '';
             let verdictClass = '';
             
-            if (analysisResult.similarity >= 95) {
-                verdictText = '🚨 ВЕРОЯТНО ПОЛНЫЙ ПЛАГИАТ';
-                verdictClass = 'high-similarity';
-            } else if (analysisResult.similarity >= 85) {
-                verdictText = '⚠️ ВЫСОКАЯ СТЕПЕНЬ СХОДСТВА';
-                verdictClass = 'high-similarity';
-            } else if (analysisResult.similarity >= 70) {
-                verdictText = '🔍 ЗНАЧИТЕЛЬНОЕ СХОДСТВО';
+            if (analysisResult.similarity >= 98) {
+                verdictText = 'ИДЕНТИЧНЫЕ ИЗОБРАЖЕНИЯ';
+                verdictClass = 'low-similarity';
+            } else if (analysisResult.similarity >= 90) {
+                verdictText = 'МИНИМАЛЬНЫЕ РАЗЛИЧИЯ';
+                verdictClass = 'low-similarity';
+            } else if (analysisResult.similarity >= 80) {
+                verdictText = 'УМЕРЕННЫЕ ИЗМЕНЕНИЯ';
                 verdictClass = 'medium-similarity';
-            } else if (analysisResult.similarity >= 50) {
-                verdictText = '📊 УМЕРЕННОЕ СХОДСТВО';
+            } else if (analysisResult.similarity >= 60) {
+                verdictText = 'ЗНАЧИТЕЛЬНЫЕ МОДИФИКАЦИИ';
                 verdictClass = 'medium-similarity';
             } else {
-                verdictText = '✅ ЗНАЧИТЕЛЬНЫЕ РАЗЛИЧИЯ';
-                verdictClass = 'low-similarity';
+                verdictText = 'СУЩЕСТВЕННЫЕ ИЗМЕНЕНИЯ';
+                verdictClass = 'high-similarity';
             }
 
             similarityScore.className = 'similarity-score ' + verdictClass;
             verdict.textContent = verdictText;
             verdict.className = 'verdict ' + verdictClass;
 
-            // Draw difference visualization
+            // Рисуем результат
             const ctx = diffCanvas.getContext('2d');
             diffCanvas.width = analysisResult.diffCanvas.width;
             diffCanvas.height = analysisResult.diffCanvas.height;
             ctx.drawImage(analysisResult.diffCanvas, 0, 0);
 
-            // Display statistics
-            stats.innerHTML = `
-                <p>• <strong>Общее количество пикселей:</strong> ${analysisResult.totalPixels.toLocaleString()}</p>
-                <p>• <strong>Различающиеся пиксели:</strong> ${analysisResult.differentPixels.toLocaleString()}</p>
-                <p>• <strong>Обнаружено значимых областей:</strong> ${analysisResult.contours}</p>
-                <p>• <strong>Процент различий:</strong> ${(100 - analysisResult.similarity).toFixed(2)}%</p>
-                <p>• <strong>Уровень уверенности:</strong> Высокий (алгоритм с подавлением шума)</p>
+            // Детальная статистика
+            detailedStats.innerHTML = `
+                <p><strong>Общий анализ:</strong></p>
+                <p>• Размер анализа: ${analysisResult.totalPixels.toLocaleString()} пикселей</p>
+                <p>• Обнаружено изменений: ${analysisResult.changedPixels.toLocaleString()} пикселей (${(100 - analysisResult.similarity).toFixed(1)}%)</p>
+                <p>• Значимые области модификаций: ${analysisResult.areas}</p>
+                <p>• Средний размер области: ${analysisResult.areas > 0 ? Math.round(analysisResult.changedPixels / analysisResult.areas) : 0} пикселей</p>
+                
+                <p style="margin-top: 15px;"><strong>Интерпретация результатов:</strong></p>
+                <p>• Области выделены при превышении порога значимости</p>
+                <p>• Игнорированы изменения менее ${document.getElementById('min-area').value} пикселей</p>
+                <p>• Алгоритм оптимизирован для обнаружения структурных модификаций</p>
             `;
 
             document.getElementById('result').style.display = 'block';
@@ -647,7 +738,7 @@
             if (!analysisResult) return;
             
             const link = document.createElement('a');
-            link.download = 'copyright-analysis-result.png';
+            link.download = 'copyright-analysis-report.png';
             link.href = document.getElementById('diff-canvas').toDataURL();
             link.click();
         }
