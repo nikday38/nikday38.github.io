@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Copyright Control</title>
     <style>
-        /* Стили для мобильного вида */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -87,8 +86,13 @@
             text-align: center;
             margin: 20px 0;
         }
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            margin: 10px 0;
+            display: none;
+        }
     </style>
-    <!-- Подключаем OpenCV.js - библиотеку компьютерного зрения для браузера -->
     <script async src="https://docs.opencv.org/master/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
 </head>
 <body>
@@ -108,12 +112,14 @@
         </div>
         <div id="image2-preview"></div>
 
-        <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect(this, 'image1-preview')">
-        <input type="file" id="file-input2" accept="image/*" onchange="handleFileSelect(this, 'image2-preview')">
+        <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect(this, 'image1-preview', 'image1')">
+        <input type="file" id="file-input2" accept="image/*" onchange="handleFileSelect(this, 'image2-preview', 'image2')">
 
         <div class="loading" id="loading">
             <p>Идёт обработка изображений... Это может занять несколько секунд.</p>
         </div>
+
+        <div class="error" id="error-message"></div>
 
         <button class="button" id="compare-btn" onclick="compareImages()" disabled>Сравнить изображения</button>
 
@@ -125,85 +131,112 @@
     </div>
 
     <script>
-        // Переменные для хранения данных изображений
         let cvReady = false;
         let image1Data = null;
         let image2Data = null;
+        let image1Element = null;
+        let image2Element = null;
 
-        // Функция, которая вызывается, когда OpenCV.js загрузился
         function onOpenCvReady() {
             console.log("OpenCV.js готов к работе!");
             cvReady = true;
             checkButtonState();
         }
 
-        // Функция для отображения превью загруженного изображения
-        function handleFileSelect(input, previewId) {
+        function handleFileSelect(input, previewId, imageId) {
             const file = input.files[0];
             if (!file || !file.type.match('image.*')) {
+                showError("Пожалуйста, выберите файл изображения (JPEG, PNG)");
                 return;
             }
 
+            hideError();
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById(previewId);
-                preview.innerHTML = `<img src="${e.target.result}" width="300"><p>${file.name}</p>`;
+                const imgElement = document.createElement('img');
+                imgElement.src = e.target.result;
+                imgElement.width = 300;
+                imgElement.id = imageId;
                 
-                // Сохраняем данные изображения
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                    
-                    if (previewId === 'image1-preview') {
-                        image1Data = ctx.getImageData(0, 0, img.width, img.height);
-                    } else {
-                        image2Data = ctx.getImageData(0, 0, img.width, img.height);
-                    }
-                    
-                    checkButtonState();
-                };
-                img.src = e.target.result;
+                preview.innerHTML = '';
+                preview.appendChild(imgElement);
+                preview.innerHTML += `<p>${file.name}</p>`;
+                
+                if (imageId === 'image1') {
+                    image1Element = imgElement;
+                } else {
+                    image2Element = imgElement;
+                }
+                
+                checkButtonState();
+            };
+            reader.onerror = function() {
+                showError("Ошибка при чтении файла");
             };
             reader.readAsDataURL(file);
         }
 
-        // Активируем кнопку, когда оба изображения загружены и OpenCV готов
         function checkButtonState() {
             const btn = document.getElementById('compare-btn');
-            btn.disabled = !(cvReady && image1Data && image2Data);
+            btn.disabled = !(cvReady && image1Element && image2Element);
         }
 
-        // ГЛАВНАЯ ФУНКЦИЯ - сравнение изображений (адаптация вашего кода на JavaScript)
-        function compareImages() {
-            if (!cvReady || !image1Data || !image2Data) return;
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
 
-            // Показываем индикатор загрузки
+        function hideError() {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.style.display = 'none';
+        }
+
+        function compareImages() {
+            if (!cvReady || !image1Element || !image2Element) {
+                showError("OpenCV не загружен или изображения не выбраны");
+                return;
+            }
+
             document.getElementById('loading').style.display = 'block';
             document.getElementById('compare-btn').disabled = true;
             document.getElementById('result').style.display = 'none';
+            hideError();
 
-            // Даем браузеру время отобразить индикатор загрузки
             setTimeout(() => {
                 try {
-                    // Преобразуем ImageData в формат OpenCV
-                    let img1 = cv.matFromImageData(image1Data);
-                    let img2 = cv.matFromImageData(image2Data);
+                    // Создаем canvas для преобразования изображений
+                    const canvas1 = document.createElement('canvas');
+                    const ctx1 = canvas1.getContext('2d');
+                    canvas1.width = image1Element.naturalWidth;
+                    canvas1.height = image1Element.naturalHeight;
+                    ctx1.drawImage(image1Element, 0, 0);
 
-                    // Приведение изображений к одному размеру (как в вашем коде)
-                    if (img1.rows !== img2.rows || img1.cols !== img2.cols) {
-                        let newSize = new cv.Size(img1.cols, img1.rows);
-                        cv.resize(img2, img2, newSize, 0, 0, cv.INTER_LINEAR);
-                    }
+                    const canvas2 = document.createElement('canvas');
+                    const ctx2 = canvas2.getContext('2d');
+                    canvas2.width = image2Element.naturalWidth;
+                    canvas2.height = image2Element.naturalHeight;
+                    ctx2.drawImage(image2Element, 0, 0);
+
+                    // Получаем ImageData
+                    const imgData1 = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
+                    const imgData2 = ctx2.getImageData(0, 0, canvas2.width, canvas2.height);
+
+                    // Создаем матрицы OpenCV
+                    let img1 = cv.matFromImageData(imgData1);
+                    let img2 = cv.matFromImageData(imgData2);
+
+                    // Приведение к одному размеру (берем размер первого изображения)
+                    let resizedImg2 = new cv.Mat();
+                    let dsize = new cv.Size(img1.cols, img1.rows);
+                    cv.resize(img2, resizedImg2, dsize, 0, 0, cv.INTER_LINEAR);
 
                     // Конвертируем в grayscale
                     let gray1 = new cv.Mat();
                     let gray2 = new cv.Mat();
                     cv.cvtColor(img1, gray1, cv.COLOR_RGBA2GRAY);
-                    cv.cvtColor(img2, gray2, cv.COLOR_RGBA2GRAY);
+                    cv.cvtColor(resizedImg2, gray2, cv.COLOR_RGBA2GRAY);
 
                     // Вычисляем абсолютную разность
                     let diff = new cv.Mat();
@@ -214,23 +247,27 @@
                     cv.threshold(diff, thresh, 50, 255, cv.THRESH_BINARY);
 
                     // Размытие для уменьшения шума
-                    cv.GaussianBlur(thresh, thresh, new cv.Size(5, 5), 0);
+                    let blurred = new cv.Mat();
+                    cv.GaussianBlur(thresh, blurred, new cv.Size(5, 5), 0);
 
                     // Морфологическая операция
                     let kernel = cv.Mat.ones(5, 5, cv.CV_8U);
-                    cv.morphologyEx(thresh, thresh, cv.MORPH_CLOSE, kernel);
+                    cv.morphologyEx(blurred, blurred, cv.MORPH_CLOSE, kernel);
 
                     // Находим контуры
                     let contours = new cv.MatVector();
                     let hierarchy = new cv.Mat();
-                    cv.findContours(thresh, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                    cv.findContours(blurred, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-                    // Рисуем прямоугольники вокруг различий
+                    // Рисуем прямоугольники вокруг различий на копии первого изображения
                     let resultImg = img1.clone();
+                    let foundDifferences = false;
+                    
                     for (let i = 0; i < contours.size(); ++i) {
                         let cnt = contours.get(i);
                         let area = cv.contourArea(cnt);
                         if (area > 100) {
+                            foundDifferences = true;
                             let rect = cv.boundingRect(cnt);
                             let point1 = new cv.Point(rect.x, rect.y);
                             let point2 = new cv.Point(rect.x + rect.width, rect.y + rect.height);
@@ -239,55 +276,53 @@
                     }
 
                     // Вычисляем процент схожести
-                    let similarity = 1 - (cv.sumElems(thresh).val / (thresh.rows * thresh.cols * 255));
+                    let totalPixels = blurred.rows * blurred.cols;
+                    let whitePixels = cv.countNonZero(blurred);
+                    let similarity = 1 - (whitePixels / totalPixels);
                     let similarityPercent = (similarity * 100).toFixed(2);
 
                     // Отображаем результат
-                    displayResult(resultImg, similarityPercent);
+                    displayResult(resultImg, similarityPercent, foundDifferences);
 
                     // Освобождаем память
-                    img1.delete(); img2.delete(); gray1.delete(); gray2.delete();
-                    diff.delete(); thresh.delete(); kernel.delete();
-                    contours.delete(); hierarchy.delete(); resultImg.delete();
+                    [img1, img2, resizedImg2, gray1, gray2, diff, thresh, blurred, kernel, contours, hierarchy, resultImg]
+                        .forEach(mat => mat && !mat.isDeleted() && mat.delete());
 
                 } catch (err) {
-                    console.error("Ошибка при обработке изображений:", err);
-                    alert("Произошла ошибка при обработке. Убедитесь, что оба изображения корректны.");
+                    console.error("Ошибка при обработке:", err);
+                    showError("Ошибка обработки: " + err.message + ". Убедитесь, что оба изображения корректны и не слишком большие.");
                 } finally {
-                    // Скрываем индикатор загрузки
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('compare-btn').disabled = false;
                 }
             }, 100);
         }
 
-        // Функция для отображения результатов
-        function displayResult(resultImg, similarity) {
+        function displayResult(resultImg, similarity, hasDifferences) {
             const resultText = document.getElementById('result-text');
             const imageContainer = document.getElementById('image-container');
             
-            // Создаем canvas для отображения результата
             const canvas = document.createElement('canvas');
             cv.imshow(canvas, resultImg);
             
-            // Очищаем контейнер и добавляем результат
             imageContainer.innerHTML = '';
             imageContainer.appendChild(canvas);
             
-            // Устанавливаем текст результата
-            if (similarity > 90) {
-                resultText.innerHTML = `Схожесть: <span class="plagiarism">${similarity}%</span><br><span class="plagiarism">Плагиат обнаружен!</span>`;
+            if (similarity > 85) {
+                resultText.innerHTML = `Схожесть: <span class="plagiarism">${similarity}%</span><br><span class="plagiarism">Высокая вероятность плагиата!</span>`;
+            } else if (similarity > 60) {
+                resultText.innerHTML = `Схожесть: <span class="plagiarism">${similarity}%</span><br><span class="plagiarism">Обнаружены значительные совпадения</span>`;
             } else {
                 resultText.innerHTML = `Схожесть: <span class="no-plagiarism">${similarity}%</span><br><span class="no-plagiarism">Значительные различия</span>`;
             }
             
-            // Показываем блок с результатом
-            document.getElementById('result').style.display = 'block';
+            if (hasDifferences) {
+                resultText.innerHTML += '<br><small>Красные прямоугольники показывают области различий</small>';
+            }
             
-            // Прокручиваем страницу к результату
+            document.getElementById('result').style.display = 'block';
             document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
         }
     </script>
 </body>
-
 </html>
