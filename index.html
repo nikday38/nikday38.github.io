@@ -306,7 +306,7 @@
 
         <div class="info-panel">
             <h4>ℹ️ Безопасный анализ</h4>
-            <p>Алгоритм использует поэтапную обработку для работы с изображениями любого размера. Максимальная надежность.</p>
+            <p>Алгоритм использует оптимизированную обработку для работы с изображениями любого размера без ошибок памяти.</p>
         </div>
 
         <div class="upload-section">
@@ -503,69 +503,69 @@
             document.getElementById('result').style.display = 'none';
             hideError();
 
-            // Запускаем асинхронно чтобы не блокировать интерфейс
+            // Запускаем асинхронно
             setTimeout(() => {
-                analyzeImages(sensitivity, scale);
+                analyzeImagesSafe(sensitivity, scale);
             }, 100);
         }
 
-        function analyzeImages(sensitivity, scale) {
+        function analyzeImagesSafe(sensitivity, scale) {
             try {
                 updateProgress(10, 'Подготовка изображений...');
 
-                // Создаем canvas с уменьшенным размером
+                // Создаем canvas
                 const canvas1 = document.createElement('canvas');
                 const canvas2 = document.createElement('canvas');
                 const ctx1 = canvas1.getContext('2d');
                 const ctx2 = canvas2.getContext('2d');
 
-                // Вычисляем размер с масштабированием
-                const width = Math.floor(Math.min(image1.naturalWidth, image2.naturalWidth) * scale);
-                const height = Math.floor(Math.min(image1.naturalHeight, image2.naturalHeight) * scale);
+                // Безопасное вычисление размеров
+                const maxSafePixels = 1000000; // 1MP для безопасности
+                const originalPixels = image1.naturalWidth * image1.naturalHeight;
+                
+                let safeScale = scale;
+                if (originalPixels * scale * scale > maxSafePixels) {
+                    safeScale = Math.sqrt(maxSafePixels / originalPixels);
+                    console.log(`Автокоррекция масштаба: ${scale} -> ${safeScale.toFixed(2)}`);
+                }
 
-                console.log(`Анализ: ${width}×${height}px (масштаб: ${scale})`);
+                const width = Math.max(100, Math.min(2000, Math.floor(image1.naturalWidth * safeScale)));
+                const height = Math.max(100, Math.min(2000, Math.floor(image1.naturalHeight * safeScale)));
+
+                console.log(`Безопасный размер: ${width}×${height}px (${width * height} пикселей)`);
 
                 canvas1.width = canvas2.width = width;
                 canvas1.height = canvas2.height = height;
 
-                updateProgress(30, 'Обработка первого изображения...');
+                updateProgress(30, 'Обработка изображений...');
                 ctx1.drawImage(image1, 0, 0, width, height);
-
-                updateProgress(50, 'Обработка второго изображения...');
                 ctx2.drawImage(image2, 0, 0, width, height);
 
-                updateProgress(70, 'Сравнение пикселей...');
+                updateProgress(50, 'Сравнение пикселей...');
                 
-                // Получаем данные небольшими порциями
-                let differentPixels = 0;
-                const totalPixels = width * height;
-                const blockSize = Math.floor(height / 10); // 10 блоков по вертикали
-
-                // Создаем canvas для результата
                 const resultCanvas = document.createElement('canvas');
                 resultCanvas.width = width;
                 resultCanvas.height = height;
                 const resultCtx = resultCanvas.getContext('2d');
                 resultCtx.drawImage(canvas1, 0, 0);
 
-                // Обрабатываем по блокам
-                for (let y = 0; y < height; y += blockSize) {
-                    const blockHeight = Math.min(blockSize, height - y);
+                let differentPixels = 0;
+                const totalPixels = width * height;
+
+                // Обрабатываем построчно для экономии памяти
+                const rowBlockSize = Math.max(1, Math.floor(height / 100)); // 100 блоков максимум
+
+                for (let y = 0; y < height; y += rowBlockSize) {
+                    const blockHeight = Math.min(rowBlockSize, height - y);
                     
+                    // Получаем данные только для текущего блока
                     const imageData1 = ctx1.getImageData(0, y, width, blockHeight);
                     const imageData2 = ctx2.getImageData(0, y, width, blockHeight);
                     const data1 = imageData1.data;
                     const data2 = imageData2.data;
 
-                    // Создаем ImageData для результата
-                    const resultImageData = resultCtx.getImageData(0, y, width, blockHeight);
-                    const resultData = resultImageData.data;
-
+                    // Обрабатываем блок
                     for (let i = 0; i < data1.length; i += 4) {
-                        const pixelIndex = i / 4;
-                        const row = y + Math.floor(pixelIndex / width);
-                        const col = pixelIndex % width;
-
                         const r1 = data1[i];
                         const g1 = data1[i + 1];
                         const b1 = data1[i + 2];
@@ -582,24 +582,29 @@
 
                         if (colorDiff > sensitivity) {
                             differentPixels++;
-                            // Помечаем различие красным
-                            resultData[i] = 255;     // R
-                            resultData[i + 1] = 100; // G
-                            resultData[i + 2] = 100; // B
                         }
                     }
 
-                    // Обновляем результат
-                    resultCtx.putImageData(resultImageData, 0, y);
-
                     // Обновляем прогресс
-                    const progress = 70 + Math.floor((y / height) * 25);
-                    updateProgress(progress, `Обработка: ${Math.round((y / height) * 100)}%`);
+                    const progress = 50 + Math.floor((y / height) * 40);
+                    updateProgress(progress, `Обработано: ${Math.round((y / height) * 100)}%`);
+
+                    // Даем браузеру передышку
+                    if (y % 100 === 0) {
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                    }
                 }
+
+                // Создаем упрощенную визуализацию (без выделения областей)
+                resultCtx.drawImage(canvas1, 0, 0);
+                resultCtx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                resultCtx.fillRect(10, 10, width - 20, 30);
+                resultCtx.fillStyle = 'white';
+                resultCtx.font = '16px Arial';
+                resultCtx.fillText(`Найдено различий: ${differentPixels} пикселей`, 20, 30);
 
                 updateProgress(95, 'Завершение анализа...');
 
-                // Вычисляем схожесть
                 const similarity = ((totalPixels - differentPixels) / totalPixels) * 100;
                 const similarityRounded = Math.max(0, Math.min(100, Math.round(similarity * 10) / 10));
                 const analysisTime = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -614,6 +619,7 @@
                 };
 
                 updateProgress(100, 'Анализ завершен!');
+                
                 setTimeout(() => {
                     document.getElementById('progress-container').style.display = 'none';
                     displayResult();
@@ -621,10 +627,15 @@
 
             } catch (error) {
                 console.error('Analysis error:', error);
-                showError('Ошибка анализа: ' + error.message);
+                showError('Ошибка: ' + error.message);
                 document.getElementById('progress-container').style.display = 'none';
                 document.getElementById('loading').style.display = 'none';
             }
+        }
+
+        // Функция-заглушка для await
+        function awaitTimeout(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
         }
 
         function displayResult() {
@@ -671,12 +682,10 @@
             detailedStats.innerHTML = `
                 <p><strong>Результаты анализа:</strong></p>
                 <p>• Разрешение анализа: ${analysisResult.resolution}</p>
-                <p>• Всего проанализировано пикселей: ${analysisResult.totalPixels.toLocaleString()}</p>
-                <p>• Найдено различий: ${analysisResult.changedPixels.toLocaleString()} пикселей</p>
-                <p>• Процент различий: ${(100 - analysisResult.similarity).toFixed(1)}%</p>
-                <p>• Время анализа: ${analysisResult.analysisTime} секунд</p>
-                <p>• Чувствительность: ${document.getElementById('sensitivity-value').textContent}%</p>
-                <p>• Масштаб: ${document.getElementById('scale-value').textContent}</p>
+                <p>• Всего пикселей: ${analysisResult.totalPixels.toLocaleString()}</p>
+                <p>• Найдено различий: ${analysisResult.changedPixels.toLocaleString()}</p>
+                <p>• Процент схожести: ${analysisResult.similarity.toFixed(1)}%</p>
+                <p>• Время анализа: ${analysisResult.analysisTime} сек</p>
             `;
 
             document.getElementById('result').style.display = 'block';
