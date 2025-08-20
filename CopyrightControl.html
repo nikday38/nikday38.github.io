@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copyright Control</title>
+    <style>
+        /* Стили для мобильного вида */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 10px;
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .upload-box {
+            border: 2px dashed #3498db;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px;
+            background-color: #ecf0f1;
+            cursor: pointer;
+        }
+        .upload-box p {
+            margin: 0;
+        }
+        #file-input {
+            display: none;
+        }
+        .button {
+            background-color: #3498db;
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+        }
+        .button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .result-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #result-text {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .plagiarism {
+            color: #e74c3c;
+        }
+        .no-plagiarism {
+            color: #27ae60;
+        }
+        #image-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        #image-container img {
+            max-width: 100%;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+    <!-- Подключаем OpenCV.js - библиотеку компьютерного зрения для браузера -->
+    <script async src="https://docs.opencv.org/master/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Copyright Control</h1>
+            <p>Загрузите два изображения для проверки на плагиат</p>
+        </div>
+
+        <div class="upload-box" onclick="document.getElementById('file-input').click();">
+            <p>Нажмите сюда, чтобы загрузить первое изображение</p>
+        </div>
+        <div id="image1-preview"></div>
+
+        <div class="upload-box" onclick="document.getElementById('file-input2').click();">
+            <p>Нажмите сюда, чтобы загрузить второе изображение</p>
+        </div>
+        <div id="image2-preview"></div>
+
+        <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect(this, 'image1-preview')">
+        <input type="file" id="file-input2" accept="image/*" onchange="handleFileSelect(this, 'image2-preview')">
+
+        <div class="loading" id="loading">
+            <p>Идёт обработка изображений... Это может занять несколько секунд.</p>
+        </div>
+
+        <button class="button" id="compare-btn" onclick="compareImages()" disabled>Сравнить изображения</button>
+
+        <div class="result-container" id="result" style="display: none;">
+            <h2>Результат проверки:</h2>
+            <p id="result-text"></p>
+            <div id="image-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // Переменные для хранения данных изображений
+        let cvReady = false;
+        let image1Data = null;
+        let image2Data = null;
+
+        // Функция, которая вызывается, когда OpenCV.js загрузился
+        function onOpenCvReady() {
+            console.log("OpenCV.js готов к работе!");
+            cvReady = true;
+            checkButtonState();
+        }
+
+        // Функция для отображения превью загруженного изображения
+        function handleFileSelect(input, previewId) {
+            const file = input.files[0];
+            if (!file || !file.type.match('image.*')) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(previewId);
+                preview.innerHTML = `<img src="${e.target.result}" width="300"><p>${file.name}</p>`;
+                
+                // Сохраняем данные изображения
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    if (previewId === 'image1-preview') {
+                        image1Data = ctx.getImageData(0, 0, img.width, img.height);
+                    } else {
+                        image2Data = ctx.getImageData(0, 0, img.width, img.height);
+                    }
+                    
+                    checkButtonState();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Активируем кнопку, когда оба изображения загружены и OpenCV готов
+        function checkButtonState() {
+            const btn = document.getElementById('compare-btn');
+            btn.disabled = !(cvReady && image1Data && image2Data);
+        }
+
+        // ГЛАВНАЯ ФУНКЦИЯ - сравнение изображений (адаптация вашего кода на JavaScript)
+        function compareImages() {
+            if (!cvReady || !image1Data || !image2Data) return;
+
+            // Показываем индикатор загрузки
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('compare-btn').disabled = true;
+            document.getElementById('result').style.display = 'none';
+
+            // Даем браузеру время отобразить индикатор загрузки
+            setTimeout(() => {
+                try {
+                    // Преобразуем ImageData в формат OpenCV
+                    let img1 = cv.matFromImageData(image1Data);
+                    let img2 = cv.matFromImageData(image2Data);
+
+                    // Приведение изображений к одному размеру (как в вашем коде)
+                    if (img1.rows !== img2.rows || img1.cols !== img2.cols) {
+                        let newSize = new cv.Size(img1.cols, img1.rows);
+                        cv.resize(img2, img2, newSize, 0, 0, cv.INTER_LINEAR);
+                    }
+
+                    // Конвертируем в grayscale
+                    let gray1 = new cv.Mat();
+                    let gray2 = new cv.Mat();
+                    cv.cvtColor(img1, gray1, cv.COLOR_RGBA2GRAY);
+                    cv.cvtColor(img2, gray2, cv.COLOR_RGBA2GRAY);
+
+                    // Вычисляем абсолютную разность
+                    let diff = new cv.Mat();
+                    cv.absdiff(gray1, gray2, diff);
+
+                    // Применяем пороговое значение
+                    let thresh = new cv.Mat();
+                    cv.threshold(diff, thresh, 50, 255, cv.THRESH_BINARY);
+
+                    // Размытие для уменьшения шума
+                    cv.GaussianBlur(thresh, thresh, new cv.Size(5, 5), 0);
+
+                    // Морфологическая операция
+                    let kernel = cv.Mat.ones(5, 5, cv.CV_8U);
+                    cv.morphologyEx(thresh, thresh, cv.MORPH_CLOSE, kernel);
+
+                    // Находим контуры
+                    let contours = new cv.MatVector();
+                    let hierarchy = new cv.Mat();
+                    cv.findContours(thresh, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+                    // Рисуем прямоугольники вокруг различий
+                    let resultImg = img1.clone();
+                    for (let i = 0; i < contours.size(); ++i) {
+                        let cnt = contours.get(i);
+                        let area = cv.contourArea(cnt);
+                        if (area > 100) {
+                            let rect = cv.boundingRect(cnt);
+                            let point1 = new cv.Point(rect.x, rect.y);
+                            let point2 = new cv.Point(rect.x + rect.width, rect.y + rect.height);
+                            cv.rectangle(resultImg, point1, point2, [0, 0, 255, 255], 2);
+                        }
+                    }
+
+                    // Вычисляем процент схожести
+                    let similarity = 1 - (cv.sumElems(thresh).val / (thresh.rows * thresh.cols * 255));
+                    let similarityPercent = (similarity * 100).toFixed(2);
+
+                    // Отображаем результат
+                    displayResult(resultImg, similarityPercent);
+
+                    // Освобождаем память
+                    img1.delete(); img2.delete(); gray1.delete(); gray2.delete();
+                    diff.delete(); thresh.delete(); kernel.delete();
+                    contours.delete(); hierarchy.delete(); resultImg.delete();
+
+                } catch (err) {
+                    console.error("Ошибка при обработке изображений:", err);
+                    alert("Произошла ошибка при обработке. Убедитесь, что оба изображения корректны.");
+                } finally {
+                    // Скрываем индикатор загрузки
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('compare-btn').disabled = false;
+                }
+            }, 100);
+        }
+
+        // Функция для отображения результатов
+        function displayResult(resultImg, similarity) {
+            const resultText = document.getElementById('result-text');
+            const imageContainer = document.getElementById('image-container');
+            
+            // Создаем canvas для отображения результата
+            const canvas = document.createElement('canvas');
+            cv.imshow(canvas, resultImg);
+            
+            // Очищаем контейнер и добавляем результат
+            imageContainer.innerHTML = '';
+            imageContainer.appendChild(canvas);
+            
+            // Устанавливаем текст результата
+            if (similarity > 90) {
+                resultText.innerHTML = `Схожесть: <span class="plagiarism">${similarity}%</span><br><span class="plagiarism">Плагиат обнаружен!</span>`;
+            } else {
+                resultText.innerHTML = `Схожесть: <span class="no-plagiarism">${similarity}%</span><br><span class="no-plagiarism">Значительные различия</span>`;
+            }
+            
+            // Показываем блок с результатом
+            document.getElementById('result').style.display = 'block';
+            
+            // Прокручиваем страницу к результату
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
