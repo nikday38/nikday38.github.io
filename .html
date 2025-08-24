@@ -51,6 +51,12 @@
             margin-bottom: 30px;
         }
         
+        @media (max-width: 768px) {
+            .upload-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         .upload-box {
             border: 3px dashed #3498db;
             border-radius: 10px;
@@ -157,6 +163,12 @@
             border-radius: 8px;
             margin: 15px 0;
         }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -204,6 +216,10 @@
             </div>
         </div>
 
+        <div class="loading" id="loading">
+            <p>⏳ Идет анализ изображений...</p>
+        </div>
+
         <div class="results" id="results">
             <h2>Результаты анализа</h2>
             <div class="similarity-score" id="similarity">0%</div>
@@ -217,17 +233,22 @@
         let image2 = null;
 
         function updateValue(sliderId, valueId) {
-            document.getElementById(valueId).textContent = document.getElementById(sliderId).value;
+            const slider = document.getElementById(sliderId);
+            const value = document.getElementById(valueId);
+            value.textContent = slider.value;
         }
 
         function handleFileSelect(input, previewId) {
             const file = input.files[0];
-            if (!file) return;
+            if (!file || !file.type.match('image.*')) {
+                alert('Пожалуйста, выберите файл изображения');
+                return;
+            }
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById(previewId);
-                const img = document.createElement('img');
+                const img = new Image();
                 img.src = e.target.result;
                 img.onload = function() {
                     preview.innerHTML = '';
@@ -256,108 +277,128 @@
             document.getElementById('preview2').innerHTML = '<span>Нажмите для загрузки</span>';
             document.getElementById('analyze-btn').disabled = true;
             document.getElementById('results').style.display = 'none';
+            document.getElementById('file1').value = '';
+            document.getElementById('file2').value = '';
         }
 
         function analyzeImages() {
             if (!image1 || !image2) return;
 
-            const sensitivity = parseInt(document.getElementById('sensitivity').value) / 100;
-            const minArea = parseInt(document.getElementById('min-area').value);
+            // Показываем загрузку
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
 
-            // Создаем canvas для анализа
-            const canvas1 = document.createElement('canvas');
-            const canvas2 = document.createElement('canvas');
-            const ctx1 = canvas1.getContext('2d');
-            const ctx2 = canvas2.getContext('2d');
+            setTimeout(() => {
+                try {
+                    const sensitivity = parseInt(document.getElementById('sensitivity').value) / 100;
+                    const minArea = parseInt(document.getElementById('min-area').value);
 
-            // Устанавливаем размер
-            const width = 600;
-            const height = Math.floor((width / image1.width) * image1.height);
+                    // Создаем canvas для анализа
+                    const canvas1 = document.createElement('canvas');
+                    const canvas2 = document.createElement('canvas');
+                    const ctx1 = canvas1.getContext('2d');
+                    const ctx2 = canvas2.getContext('2d');
 
-            canvas1.width = canvas2.width = width;
-            canvas1.height = canvas2.height = height;
+                    // Устанавливаем размер
+                    const width = Math.min(800, image1.width, image2.width);
+                    const height = Math.min(600, image1.height, image2.height);
 
-            // Рисуем изображения
-            ctx1.drawImage(image1, 0, 0, width, height);
-            ctx2.drawImage(image2, 0, 0, width, height);
+                    canvas1.width = canvas2.width = width;
+                    canvas1.height = canvas2.height = height;
 
-            // Получаем данные
-            const imageData1 = ctx1.getImageData(0, 0, width, height);
-            const imageData2 = ctx2.getImageData(0, 0, width, height);
-            const data1 = imageData1.data;
-            const data2 = imageData2.data;
+                    // Рисуем изображения
+                    ctx1.drawImage(image1, 0, 0, width, height);
+                    ctx2.drawImage(image2, 0, 0, width, height);
 
-            // Создаем карту различий
-            const diffMap = new Uint8ClampedArray(width * height);
-            let differentPixels = 0;
+                    // Получаем данные
+                    const imageData1 = ctx1.getImageData(0, 0, width, height);
+                    const imageData2 = ctx2.getImageData(0, 0, width, height);
+                    const data1 = imageData1.data;
+                    const data2 = imageData2.data;
 
-            for (let i = 0; i < data1.length; i += 4) {
-                const idx = i / 4;
-                
-                const r1 = data1[i];
-                const g1 = data1[i + 1];
-                const b1 = data1[i + 2];
-                
-                const r2 = data2[i];
-                const g2 = data2[i + 1];
-                const b2 = data2[i + 2];
+                    // Создаем карту различий
+                    const diffMap = new Uint8ClampedArray(width * height);
+                    let differentPixels = 0;
 
-                const diff = (
-                    Math.abs(r1 - r2) + 
-                    Math.abs(g1 - g2) + 
-                    Math.abs(b1 - b2)
-                ) / (3 * 255);
+                    for (let i = 0; i < data1.length; i += 4) {
+                        const pixelIndex = Math.floor(i / 4);
+                        
+                        const r1 = data1[i];
+                        const g1 = data1[i + 1];
+                        const b1 = data1[i + 2];
+                        
+                        const r2 = data2[i];
+                        const g2 = data2[i + 1];
+                        const b2 = data2[i + 2];
 
-                if (diff > sensitivity) {
-                    diffMap[idx] = 255;
-                    differentPixels++;
+                        const diff = (
+                            Math.abs(r1 - r2) + 
+                            Math.abs(g1 - g2) + 
+                            Math.abs(b1 - b2)
+                        ) / (3 * 255);
+
+                        if (diff > sensitivity) {
+                            diffMap[pixelIndex] = 255;
+                            differentPixels++;
+                        }
+                    }
+
+                    // Находим области различий
+                    const areas = findAreas(diffMap, width, height, minArea);
+
+                    // Создаем результат
+                    const resultCanvas = document.getElementById('result-canvas');
+                    const resultCtx = resultCanvas.getContext('2d');
+                    
+                    resultCanvas.width = width;
+                    resultCanvas.height = height;
+                    resultCtx.drawImage(canvas1, 0, 0);
+                    
+                    // Рисуем области различий
+                    resultCtx.strokeStyle = 'red';
+                    resultCtx.lineWidth = 2;
+                    resultCtx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+                    
+                    areas.forEach(area => {
+                        let minX = width, minY = height, maxX = 0, maxY = 0;
+                        area.forEach(([x, y]) => {
+                            minX = Math.min(minX, x);
+                            minY = Math.min(minY, y);
+                            maxX = Math.max(maxX, x);
+                            maxY = Math.max(maxY, y);
+                        });
+                        
+                        resultCtx.beginPath();
+                        resultCtx.rect(minX, minY, maxX - minX, maxY - minY);
+                        resultCtx.stroke();
+                        resultCtx.fill();
+                    });
+
+                    // Вычисляем схожесть
+                    const totalPixels = width * height;
+                    const similarity = ((totalPixels - differentPixels) / totalPixels) * 100;
+                    
+                    // Показываем результаты
+                    document.getElementById('similarity').textContent = similarity.toFixed(1) + '%';
+                    document.getElementById('similarity').style.color = similarity > 80 ? 'green' : similarity > 50 ? 'orange' : 'red';
+                    
+                    document.getElementById('stats').innerHTML = `
+                        <p><strong>Размер анализа:</strong> ${width}×${height} пикселей</p>
+                        <p><strong>Всего пикселей:</strong> ${totalPixels.toLocaleString()}</p>
+                        <p><strong>Различающихся пикселей:</strong> ${differentPixels.toLocaleString()}</p>
+                        <p><strong>Областей различий:</strong> ${areas.length}</p>
+                        <p><strong>Чувствительность:</strong> ${(sensitivity * 100).toFixed(0)}%</p>
+                    `;
+                    
+                    document.getElementById('results').style.display = 'block';
+                    document.getElementById('loading').style.display = 'none';
+
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    alert('Произошла ошибка при анализе: ' + error.message);
+                    document.getElementById('loading').style.display = 'none';
                 }
-            }
-
-            // Находим области различий
-            const areas = findAreas(diffMap, width, height, minArea);
-
-            // Создаем результат
-            const resultCanvas = document.getElementById('result-canvas');
-            resultCanvas.width = width;
-            resultCanvas.height = height;
-            const resultCtx = resultCanvas.getContext('2d');
-            
-            resultCtx.drawImage(canvas1, 0, 0);
-            
-            // Рисуем области различий
-            resultCtx.strokeStyle = 'red';
-            resultCtx.lineWidth = 2;
-            resultCtx.fillStyle = 'rgba(255, 0, 0, 0.1)';
-            
-            areas.forEach(area => {
-                let minX = width, minY = height, maxX = 0, maxY = 0;
-                area.forEach(([x, y]) => {
-                    minX = Math.min(minX, x);
-                    minY = Math.min(minY, y);
-                    maxX = Math.max(maxX, x);
-                    maxY = Math.max(maxY, y);
-                });
-                
-                resultCtx.beginPath();
-                resultCtx.rect(minX, minY, maxX - minX, maxY - minY);
-                resultCtx.stroke();
-                resultCtx.fill();
-            });
-
-            // Вычисляем схожесть
-            const totalPixels = width * height;
-            const similarity = ((totalPixels - differentPixels) / totalPixels) * 100;
-            
-            // Показываем результаты
-            document.getElementById('similarity').textContent = similarity.toFixed(1) + '%';
-            document.getElementById('stats').innerHTML = `
-                <p>Всего пикселей: ${totalPixels.toLocaleString()}</p>
-                <p>Различающихся пикселей: ${differentPixels.toLocaleString()}</p>
-                <p>Областей различий: ${areas.length}</p>
-            `;
-            
-            document.getElementById('results').style.display = 'block';
+            }, 100);
         }
 
         function findAreas(diffMap, width, height, minArea) {
@@ -401,6 +442,10 @@
             
             return areas;
         }
+
+        // Инициализация
+        updateValue('sensitivity', 'sensitivity-value');
+        updateValue('min-area', 'area-value');
     </script>
 </body>
 </html>
