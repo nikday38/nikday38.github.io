@@ -6,7 +6,695 @@
     <title>Copyright Vision Pro | Умный анализ</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        /* ... (все стили остаются без изменений) ... */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 50px;
+            border-radius: 25px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 40px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            border-radius: 2px;
+        }
+        
+        .header h1 {
+            font-size: 3.5em;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header p {
+            font-size: 1.4em;
+            font-weight: 300;
+            margin: 20px 0 0 0;
+            color: #7f8c8d;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .upload-section {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 2px dashed transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-section::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            z-index: -1;
+            border-radius: 20px;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+        
+        .upload-box {
+            background: white;
+            border-radius: 18px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-box:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+            border-color: #4ecdc4;
+        }
+        
+        .upload-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .upload-box:hover::before {
+            left: 100%;
+        }
+        
+        .upload-icon {
+            font-size: 60px;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+        }
+        
+        .upload-box h3 {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .upload-box p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+            margin-bottom: 25px;
+        }
+        
+        .preview-container {
+            margin-top: 25px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            background: rgba(248, 249, 250, 0.8);
+            padding: 20px;
+        }
+        
+        .preview-container img {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 3px solid white;
+        }
+        
+        .image-info {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            margin: 15px 0;
+            font-size: 0.9em;
+            display: inline-block;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .controls-panel {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 45px;
+            border-radius: 25px;
+            margin: 40px 0;
+            box-shadow: 0 20px 50px rgba(245, 87, 108, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .controls-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="70" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="70" cy="30" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .controls-panel h3 {
+            color: white;
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 35px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        .slider-container {
+            margin: 28px 0;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 25px;
+            border-radius: 18px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 15px;
+            font-weight: 500;
+            color: white;
+            font-size: 1.2em;
+        }
+        
+        .slider-value {
+            display: inline-block;
+            min-width: 50px;
+            text-align: center;
+            font-weight: 700;
+            color: #ffeaa7;
+            font-size: 1.3em;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-left: 15px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin: 20px 0;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 3px solid white;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            padding: 18px 45px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 15px 35px rgba(0, 184, 148, 0.3);
+            position: relative;
+            overflow: hidden;
+            min-width: 200px;
+        }
+        
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .button:hover::before {
+            left: 100%;
+        }
+        
+        .button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 25px 50px rgba(0, 184, 148, 0.4);
+        }
+        
+        .button:disabled {
+            background: linear-gradient(135deg, #b2bec3, #636e72);
+            transform: none;
+            box-shadow: 0 5px 15px rgba(99, 110, 114, 0.2);
+            cursor: not-allowed;
+        }
+        
+        .button-secondary {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            box-shadow: 0 15px 35px rgba(108, 92, 231, 0.3);
+        }
+        
+        .button-secondary:hover {
+            box-shadow: 0 25px 50px rgba(108, 92, 231, 0.4);
+        }
+        
+        .progress-container {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            padding: 35px;
+            border-radius: 25px;
+            margin: 40px 0;
+            box-shadow: 0 20px 50px rgba(116, 185, 255, 0.3);
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            margin: 25px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffeaa7, #fdcb6e);
+            border-radius: 15px;
+            transition: width 0.4s ease;
+            width: 0%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .progress-text {
+            text-align: center;
+            color: white;
+            font-size: 1.3em;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            background: linear-gradient(135deg, #fd79a8, #e84393);
+            border-radius: 25px;
+            margin: 40px 0;
+            box-shadow: 0 20px 50px rgba(253, 121, 168, 0.3);
+            display: none;
+        }
+        
+        .spinner {
+            width: 70px;
+            height: 70px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffeaa7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .loading-text {
+            color: white;
+            font-size: 1.4em;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .error {
+            background: linear-gradient(135deg, #ff7675, #d63031);
+            color: white;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            margin: 40px 0;
+            box-shadow: 0 15px 40px rgba(214, 48, 49, 0.25);
+            display: none;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+        
+        .results-section {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            padding: 50px;
+            border-radius: 30px;
+            margin: 50px 0;
+            box-shadow: 0 25px 60px rgba(108, 92, 231, 0.3);
+            display: none;
+        }
+        
+        .results-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .results-header h2 {
+            font-size: 2.8em;
+            font-weight: 700;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+        
+        @media (max-width: 1024px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .result-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            padding: 35px;
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        
+        .result-card h3 {
+            color: white;
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .similarity-score {
+            font-size: 4em;
+            font-weight: 800;
+            margin: 25px 0;
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+        }
+        
+        .verdict {
+            font-size: 1.5em;
+            font-weight: 600;
+            padding: 20px;
+            border-radius: 20px;
+            margin: 25px 0;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+            margin-top: 35px;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-8px);
+        }
+        
+        .stat-value {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #ffeaa7;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .stat-label {
+            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+        
+        .diff-canvas {
+            max-width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            margin: 25px 0;
+        }
+        
+        .detailed-stats {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 25px;
+            margin: 40px 0;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .detailed-stats h3 {
+            color: white;
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .detailed-stats p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2em;
+            line-height: 1.8;
+            margin: 15px 0;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border-left: 4px solid #ffeaa7;
+        }
+        
+        .footer-buttons {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            margin-top: 50px;
+            flex-wrap: wrap;
+        }
+        
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .success-animation {
+            animation: successPulse 2s ease-in-out;
+        }
+        
+        @keyframes successPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 30px 70px rgba(0, 184, 148, 0.5); }
+        }
+
+        .difference-highlight {
+            position: absolute;
+            border: 3px solid #ff4757;
+            border-radius: 8px;
+            background: rgba(255, 71, 87, 0.1);
+            pointer-events: none;
+            z-index: 10;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.5);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { 
+                border-color: #ff4757;
+                box-shadow: 0 0 20px rgba(255, 71, 87, 0.5);
+            }
+            50% { 
+                border-color: #ff6b81;
+                box-shadow: 0 0 30px rgba(255, 107, 129, 0.8);
+            }
+        }
+        
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px;
+                margin: 20px auto;
+            }
+            
+            .header h1 {
+                font-size: 2.5em;
+            }
+            
+            .header p {
+                font-size: 1.2em;
+            }
+            
+            .upload-section, .controls-panel, .results-section {
+                padding: 25px;
+            }
+            
+            .button {
+                padding: 15px 30px;
+                font-size: 1.1em;
+                min-width: 160px;
+            }
+            
+            .similarity-score {
+                font-size: 3em;
+            }
+        }
     </style>
 </head>
 <body>
@@ -15,39 +703,64 @@
     <div class="container">
         <div class="header">
             <h1>🔍 Copyright Vision Pro</h1>
-            <p>Умный анализ с точным обнаружением различий</p>
+            <p>Умный анализ изображений с точным обнаружением различий</p>
         </div>
 
         <div class="main-content">
-            <!-- ... (разметка загрузки файлов) ... -->
+            <div class="upload-section">
+                <div class="upload-box" onclick="document.getElementById('file-input1').click()">
+                    <div class="upload-icon">📸</div>
+                    <h3>Исходное изображение</h3>
+                    <p>Загрузите оригинальное фото для сравнения</p>
+                    <div class="preview-container" id="preview1">
+                        <div style="color: #7f8c8d; font-size: 1.2em;">Нажмите для загрузки</div>
+                    </div>
+                    <div class="image-info" id="info1" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="upload-section">
+                <div class="upload-box" onclick="document.getElementById('file-input2').click()">
+                    <div class="upload-icon">🔍</div>
+                    <h3>Проверяемое изображение</h3>
+                    <p>Загрузите фото для проверки на отличия</p>
+                    <div class="preview-container" id="preview2">
+                        <div style="color: #7f8c8d; font-size: 1.2em;">Нажмите для загрузки</div>
+                    </div>
+                    <div class="image-info" id="info2" style="display: none;"></div>
+                </div>
+            </div>
         </div>
+
+        <input type="file" id="file-input1" accept="image/*" onchange="handleFileSelect(this, 'preview1', 'info1')" style="display: none;">
+        <input type="file" id="file-input2" accept="image/*" onchange="handleFileSelect(this, 'preview2', 'info2')" style="display: none;">
 
         <div class="controls-panel">
             <h3>⚙️ Настройки точного анализа</h3>
             
             <div class="slider-container">
                 <label>
-                    Строгость: <span class="slider-value" id="strictness-value">8</span>
+                    Чувствительность: <span class="slider-value" id="sensitivity-value">15</span>%
                 </label>
-                <input type="range" id="strictness" min="1" max="20" value="8" onchange="updateSliderValue('strictness', 'strictness-value')">
+                <input type="range" id="sensitivity" min="5" max="30" value="15" onchange="updateSliderValue('sensitivity', 'sensitivity-value')">
                 <div style="color: rgba(255,255,255,0.8); font-size: 0.9em; margin-top: 10px;">
-                    Выше = меньше ложных срабатываний
+                    Определяет минимальную разницу для обнаружения
                 </div>
             </div>
 
             <div class="slider-container">
                 <label>
-                    Минимальная область: <span class="slider-value" id="min-area-value">150</span>px²
+                    Минимальная область: <span class="slider-value" id="min-area-value">100</span>px²
                 </label>
-                <input type="range" id="min-area" min="50" max="500" value="150" onchange="updateSliderValue('min-area', 'min-area-value')">
+                <input type="range" id="min-area" min="20" max="500" value="100" onchange="updateSliderValue('min-area', 'min-area-value')">
                 <div style="color: rgba(255,255,255,0.8); font-size: 0.9em; margin-top: 10px;">
                     Игнорировать мелкие различия
                 </div>
             </div>
 
             <div class="button-group">
-                <button class="button" id="compare-btn" onclick="startSmartAnalysis()" disabled>
-                    🧠 Запустить умный анализ
+                <button class="button" id="compare-btn" onclick="startAnalysis()" disabled>
+                    🚀 Начать анализ
                 </button>
                 <button class="button button-secondary" onclick="resetAnalysis()">
                     🔄 Сбросить
@@ -55,17 +768,175 @@
             </div>
         </div>
 
-        <!-- ... (остальная разметка) ... -->
+        <div class="progress-container" id="progress-container">
+            <div class="progress-text" id="progress-text">Подготовка к анализу...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loading-text">Идет анализ изображений...</div>
+        </div>
+
+        <div class="error" id="error-message"></div>
+
+        <div class="results-section" id="result">
+            <div class="results-header">
+                <h2>🎯 Результаты анализа</h2>
+            </div>
+            
+            <div class="results-grid">
+                <div class="result-card">
+                    <h3>📊 Статистика схожести</h3>
+                    <div class="similarity-score" id="similarity-score">0%</div>
+                    <div class="verdict" id="verdict">Ожидание анализа...</div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-pixels">0</div>
+                            <div class="stat-label">Всего пикселей</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-diff">0</div>
+                            <div class="stat-label">Измененные</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-areas">0</div>
+                            <div class="stat-label">Области</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3>👁️ Визуализация отличий</h3>
+                    <div class="canvas-container" id="canvas-container">
+                        <canvas id="diff-canvas" class="diff-canvas"></canvas>
+                    </div>
+                    <p style="text-align: center; color: #6c757d; font-size: 13px; margin-top: 10px;">
+                        Красным выделены значимые области различий
+                    </p>
+                </div>
+            </div>
+
+            <div class="detailed-stats">
+                <h3>📈 Детальная информация</h3>
+                <div id="detailed-stats"></div>
+            </div>
+
+            <div class="footer-buttons">
+                <button class="button" onclick="saveResult()">
+                    💾 Сохранить отчет
+                </button>
+                <button class="button button-secondary" onclick="resetAnalysis()">
+                    📸 Новый анализ
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // ... (частицы и базовые функции) ...
+        // Создаем частицы для фона
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const size = Math.random() * 20 + 5;
+                const duration = Math.random() * 30 + 20;
+                const delay = Math.random() * 10;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${Math.random() * 100}vw`;
+                particle.style.animationDuration = `${duration}s`;
+                particle.style.animationDelay = `${delay}s`;
+                
+                container.appendChild(particle);
+            }
+        }
+        
+        // Инициализация
+        createParticles();
+        
+        let image1 = null;
+        let image2 = null;
+        let analysisResult = null;
+        let startTime = 0;
+        let differenceAreas = [];
 
-        function startSmartAnalysis() {
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const value = document.getElementById(valueId);
+            value.textContent = slider.value;
+        }
+
+        function handleFileSelect(input, previewId, infoId) {
+            const file = input.files[0];
+            if (!file || !file.type.match('image.*')) {
+                showError('Пожалуйста, выберите файл изображения');
+                return;
+            }
+
+            hideError();
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(previewId);
+                const info = document.getElementById(infoId);
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '250px';
+                
+                img.onload = function() {
+                    info.innerHTML = `${img.naturalWidth}×${img.naturalHeight}px · ${Math.round(file.size/1024)}KB`;
+                    info.style.display = 'block';
+                };
+                
+                preview.innerHTML = '';
+                preview.appendChild(img);
+                
+                if (previewId === 'preview1') {
+                    image1 = img;
+                } else {
+                    image2 = img;
+                }
+                
+                checkButtonState();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function checkButtonState() {
+            const btn = document.getElementById('compare-btn');
+            btn.disabled = !(image1 && image2);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.style.display = 'none';
+        }
+
+        function updateProgress(percent, text) {
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-text').textContent = text;
+        }
+
+        function startAnalysis() {
             if (!image1 || !image2) return;
 
             startTime = Date.now();
-            const strictness = parseInt(document.getElementById('strictness').value);
+            const sensitivity = parseInt(document.getElementById('sensitivity').value) / 100;
             const minArea = parseInt(document.getElementById('min-area').value);
 
             document.getElementById('progress-container').style.display = 'block';
@@ -74,11 +945,11 @@
             hideError();
 
             setTimeout(() => {
-                performSmartAnalysis(strictness, minArea);
+                analyzeImages(sensitivity, minArea);
             }, 100);
         }
 
-        function performSmartAnalysis(strictness, minArea) {
+        function analyzeImages(sensitivity, minArea) {
             try {
                 updateProgress(10, 'Подготовка изображений...');
 
@@ -88,7 +959,7 @@
                 const ctx2 = canvas2.getContext('2d');
 
                 // Используем оптимальный размер
-                const maxDimension = 1000;
+                const maxDimension = 800;
                 const scale = Math.min(maxDimension / image1.naturalWidth, maxDimension / image1.naturalHeight, 1);
                 const width = Math.floor(image1.naturalWidth * scale);
                 const height = Math.floor(image1.naturalHeight * scale);
@@ -100,55 +971,45 @@
                 ctx1.drawImage(image1, 0, 0, width, height);
                 ctx2.drawImage(image2, 0, 0, width, height);
 
-                updateProgress(50, 'Точное сравнение...');
+                updateProgress(50, 'Поиск различий...');
                 
                 const imageData1 = ctx1.getImageData(0, 0, width, height);
                 const imageData2 = ctx2.getImageData(0, 0, width, height);
                 const data1 = imageData1.data;
                 const data2 = imageData2.data;
 
-                // Создаем карту значимых различий
+                // Создаем карту различий
                 const diffMap = new Uint8ClampedArray(width * height);
-                let totalDifferences = 0;
+                let differentPixels = 0;
 
-                // Анализируем с учетом строгости
-                for (let y = 0; y < height; y++) {
-                    for (let x = 0; x < width; x++) {
-                        const idx = (y * width + x) * 4;
-                        
-                        const r1 = data1[idx];
-                        const g1 = data1[idx + 1];
-                        const b1 = data1[idx + 2];
-                        
-                        const r2 = data2[idx];
-                        const g2 = data2[idx + 1];
-                        const b2 = data2[idx + 2];
+                for (let i = 0; i < data1.length; i += 4) {
+                    const pixelIndex = i / 4;
+                    
+                    const r1 = data1[i];
+                    const g1 = data1[i + 1];
+                    const b1 = data1[i + 2];
+                    
+                    const r2 = data2[i];
+                    const g2 = data2[i + 1];
+                    const b2 = data2[i + 2];
 
-                        // Вычисляем цветовую разницу (более точная формула)
-                        const diff = Math.sqrt(
-                            Math.pow(r1 - r2, 2) * 0.3 +
-                            Math.pow(g1 - g2, 2) * 0.59 +
-                            Math.pow(b1 - b2, 2) * 0.11
-                        );
+                    // Вычисляем цветовую разницу
+                    const colorDiff = (
+                        Math.abs(r1 - r2) + 
+                        Math.abs(g1 - g2) + 
+                        Math.abs(b1 - b2)
+                    ) / (3 * 255);
 
-                        // Порог зависит от строгости
-                        const threshold = strictness * 10;
-                        
-                        if (diff > threshold) {
-                            diffMap[y * width + x] = 255;
-                            totalDifferences++;
-                        }
-                    }
-
-                    if (y % 10 === 0) {
-                        updateProgress(50 + (y / height * 30), `Сканирование: ${Math.round(y / height * 100)}%`);
+                    if (colorDiff > sensitivity) {
+                        diffMap[pixelIndex] = 255;
+                        differentPixels++;
                     }
                 }
 
-                updateProgress(80, 'Поиск значимых областей...');
+                updateProgress(70, 'Поиск областей...');
                 
-                // Умное объединение пикселей в области
-                const significantAreas = findSignificantAreas(diffMap, width, height, minArea);
+                // Находим связные компоненты
+                differenceAreas = findConnectedComponents(diffMap, width, height, minArea);
 
                 updateProgress(90, 'Создание результата...');
                 
@@ -161,47 +1022,37 @@
                 // Рисуем оригинальное изображение
                 resultCtx.drawImage(canvas1, 0, 0);
 
-                // Подсвечиваем ТОЛЬКО значимые различия
+                // Подсвечиваем различия
                 resultCtx.strokeStyle = '#ff4757';
                 resultCtx.lineWidth = 3;
                 resultCtx.fillStyle = 'rgba(255, 71, 87, 0.2)';
-                resultCtx.font = '14px Arial';
-                resultCtx.textAlign = 'center';
-
-                significantAreas.forEach((area, index) => {
+                
+                differenceAreas.forEach(area => {
                     let minX = width, minY = height, maxX = 0, maxY = 0;
-                    for (const [x, y] of area.pixels) {
+                    for (const [x, y] of area) {
                         minX = Math.min(minX, x);
                         minY = Math.min(minY, y);
                         maxX = Math.max(maxX, x);
                         maxY = Math.max(maxY, y);
                     }
 
-                    // Рисуем bounding box
                     resultCtx.beginPath();
                     resultCtx.rect(minX, minY, maxX - minX, maxY - minY);
                     resultCtx.stroke();
                     resultCtx.fill();
-
-                    // Добавляем номер области
-                    resultCtx.fillStyle = 'white';
-                    resultCtx.fillText((index + 1).toString(), minX + (maxX - minX) / 2, minY - 5);
-                    resultCtx.fillStyle = 'rgba(255, 71, 87, 0.2)';
                 });
 
-                // Вычисляем реальную схожесть
+                // Вычисляем схожесть
                 const totalPixels = width * height;
-                const changedPixels = significantAreas.reduce((sum, area) => sum + area.size, 0);
-                const similarity = ((totalPixels - changedPixels) / totalPixels) * 100;
+                const similarity = ((totalPixels - differentPixels) / totalPixels) * 100;
                 const similarityRounded = Math.max(0, Math.min(100, Math.round(similarity * 10) / 10));
 
                 analysisResult = {
                     similarity: similarityRounded,
                     diffCanvas: resultCanvas,
                     totalPixels: totalPixels,
-                    changedPixels: changedPixels,
-                    areasCount: significantAreas.length,
-                    areas: significantAreas,
+                    changedPixels: differentPixels,
+                    areasCount: differenceAreas.length,
                     analysisTime: ((Date.now() - startTime) / 1000).toFixed(1),
                     resolution: `${width}×${height}px`
                 };
@@ -210,7 +1061,7 @@
                 
                 setTimeout(() => {
                     document.getElementById('progress-container').style.display = 'none';
-                    displaySmartResults();
+                    displayResult();
                 }, 500);
 
             } catch (error) {
@@ -221,28 +1072,22 @@
             }
         }
 
-        function findSignificantAreas(diffMap, width, height, minArea) {
+        function findConnectedComponents(diffMap, width, height, minArea) {
             const visited = new Array(width * height).fill(false);
             const areas = [];
-
+            
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     const idx = y * width + x;
-                    
                     if (diffMap[idx] === 255 && !visited[idx]) {
-                        const area = {
-                            pixels: [],
-                            size: 0
-                        };
-                        
+                        const area = [];
                         const queue = [[x, y]];
                         visited[idx] = true;
-
+                        
                         while (queue.length > 0) {
                             const [cx, cy] = queue.shift();
-                            area.pixels.push([cx, cy]);
-                            area.size++;
-
+                            area.push([cx, cy]);
+                            
                             // Проверяем соседей
                             for (let dy = -1; dy <= 1; dy++) {
                                 for (let dx = -1; dx <= 1; dx++) {
@@ -261,19 +1106,18 @@
                                 }
                             }
                         }
-
-                        // Добавляем только значимые области
-                        if (area.size >= minArea) {
+                        
+                        if (area.length >= minArea) {
                             areas.push(area);
                         }
                     }
                 }
             }
-
+            
             return areas;
         }
 
-        function displaySmartResults() {
+        function displayResult() {
             if (!analysisResult) return;
 
             const similarityScore = document.getElementById('similarity-score');
@@ -289,21 +1133,17 @@
             statDiff.textContent = analysisResult.changedPixels.toLocaleString();
             statAreas.textContent = analysisResult.areasCount;
             
-            // Более точная оценка схожести
             let verdictText = '';
             let verdictClass = '';
             
             if (analysisResult.similarity >= 95) {
-                verdictText = '🎉 ПОЧТИ ИДЕНТИЧНЫЕ';
+                verdictText = '🎉 ВЫСОКАЯ СХОЖЕСТЬ';
                 verdictClass = 'low-similarity';
             } else if (analysisResult.similarity >= 80) {
-                verdictText = '✅ ВЫСОКАЯ СХОЖЕСТЬ';
+                verdictText = '✅ ХОРОШАЯ СХОЖЕСТЬ';
                 verdictClass = 'low-similarity';
             } else if (analysisResult.similarity >= 60) {
                 verdictText = '⚠️ СРЕДНЯЯ СХОЖЕСТЬ';
-                verdictClass = 'medium-similarity';
-            } else if (analysisResult.similarity >= 40) {
-                verdictText = '🔍 ЗАМЕТНЫЕ РАЗЛИЧИЯ';
                 verdictClass = 'medium-similarity';
             } else {
                 verdictText = '❌ ЗНАЧИТЕЛЬНЫЕ ОТЛИЧИЯ';
@@ -314,7 +1154,7 @@
             verdict.textContent = verdictText;
             verdict.className = 'verdict ' + verdictClass;
 
-            // Отображаем результат
+            // Рисуем результат
             const ctx = diffCanvas.getContext('2d');
             diffCanvas.width = analysisResult.diffCanvas.width;
             diffCanvas.height = analysisResult.diffCanvas.height;
@@ -322,20 +1162,41 @@
 
             // Детальная статистика
             detailedStats.innerHTML = `
-                <p><strong>Качество анализа:</strong> ${analysisResult.resolution}</p>
-                <p><strong>Всего проанализировано:</strong> ${analysisResult.totalPixels.toLocaleString()} пикселей</p>
-                <p><strong>Значимые различия:</strong> ${analysisResult.changedPixels.toLocaleString()} пикселей</p>
+                <p><strong>Разрешение анализа:</strong> ${analysisResult.resolution}</p>
+                <p><strong>Всего пикселей:</strong> ${analysisResult.totalPixels.toLocaleString()}</p>
+                <p><strong>Измененные пиксели:</strong> ${analysisResult.changedPixels.toLocaleString()}</p>
                 <p><strong>Областей различий:</strong> ${analysisResult.areasCount}</p>
-                <p><strong>Реальная схожесть:</strong> ${analysisResult.similarity.toFixed(2)}%</p>
+                <p><strong>Процент схожести:</strong> ${analysisResult.similarity.toFixed(2)}%</p>
                 <p><strong>Время анализа:</strong> ${analysisResult.analysisTime} сек</p>
-                <p><strong>Настройки:</strong> Строгость ${document.getElementById('strictness-value').textContent}, Минимальная область ${document.getElementById('min-area-value').textContent}px²</p>
             `;
 
             document.getElementById('result').style.display = 'block';
             document.getElementById('loading').style.display = 'none';
         }
 
-        // ... (остальные функции) ...
+        function resetAnalysis() {
+            image1 = null;
+            image2 = null;
+            analysisResult = null;
+            differenceAreas = [];
+            document.getElementById('preview1').innerHTML = '<div style="color: #7f8c8d; font-size: 1.2em;">Нажмите для загрузки</div>';
+            document.getElementById('preview2').innerHTML = '<div style="color: #7f8c8d; font-size: 1.2em;">Нажмите для загрузки</div>';
+            document.getElementById('info1').style.display = 'none';
+            document.getElementById('info2').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('progress-container').style.display = 'none';
+            document.getElementById('compare-btn').disabled = true;
+            hideError();
+        }
+
+        function saveResult() {
+            if (!analysisResult) return;
+            
+            const link = document.createElement('a');
+            link.download = 'copyright-analysis-report.png';
+            link.href = document.getElementById('diff-canvas').toDataURL();
+            link.click();
+        }
     </script>
 </body>
 </html>
