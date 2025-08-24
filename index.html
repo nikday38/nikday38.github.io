@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copyright Vision Pro | Структурный анализ</title>
+    <title>Copyright Vision Pro | Умный анализ</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         /* ... (все стили остаются без изменений) ... */
@@ -15,49 +15,39 @@
     <div class="container">
         <div class="header">
             <h1>🔍 Copyright Vision Pro</h1>
-            <p>Структурный анализ изображений с интеллектуальным сравнением</p>
+            <p>Умный анализ с точным обнаружением различий</p>
         </div>
 
         <div class="main-content">
-            <!-- ... (остальная разметка без изменений) ... -->
+            <!-- ... (разметка загрузки файлов) ... -->
         </div>
 
         <div class="controls-panel">
-            <h3>⚙️ Настройки структурного анализа</h3>
+            <h3>⚙️ Настройки точного анализа</h3>
             
             <div class="slider-container">
                 <label>
-                    Чувствительность: <span class="slider-value" id="sensitivity-value">15</span>%
+                    Строгость: <span class="slider-value" id="strictness-value">8</span>
                 </label>
-                <input type="range" id="sensitivity" min="5" max="30" value="15" onchange="updateSliderValue('sensitivity', 'sensitivity-value')">
+                <input type="range" id="strictness" min="1" max="20" value="8" onchange="updateSliderValue('strictness', 'strictness-value')">
                 <div style="color: rgba(255,255,255,0.8); font-size: 0.9em; margin-top: 10px;">
-                    Более высокие значения = меньше ложных срабатываний
+                    Выше = меньше ложных срабатываний
                 </div>
             </div>
 
             <div class="slider-container">
                 <label>
-                    Размер блока: <span class="slider-value" id="block-size-value">16</span>px
+                    Минимальная область: <span class="slider-value" id="min-area-value">150</span>px²
                 </label>
-                <input type="range" id="block-size" min="4" max="32" step="4" value="16" onchange="updateSliderValue('block-size', 'block-size-value')">
-                <div style="color: rgba(255,255,255,0.8); font-size: 0.9em; margin-top: 10px;">
-                    Размер области для структурного сравнения
-                </div>
-            </div>
-
-            <div class="slider-container">
-                <label>
-                    Минимальная область: <span class="slider-value" id="min-area-value">100</span>px²
-                </label>
-                <input type="range" id="min-area" min="20" max="500" value="100" onchange="updateSliderValue('min-area', 'min-area-value')">
+                <input type="range" id="min-area" min="50" max="500" value="150" onchange="updateSliderValue('min-area', 'min-area-value')">
                 <div style="color: rgba(255,255,255,0.8); font-size: 0.9em; margin-top: 10px;">
                     Игнорировать мелкие различия
                 </div>
             </div>
 
             <div class="button-group">
-                <button class="button" id="compare-btn" onclick="startAnalysis()" disabled>
-                    🚀 Начать структурный анализ
+                <button class="button" id="compare-btn" onclick="startSmartAnalysis()" disabled>
+                    🧠 Запустить умный анализ
                 </button>
                 <button class="button button-secondary" onclick="resetAnalysis()">
                     🔄 Сбросить
@@ -65,76 +55,30 @@
             </div>
         </div>
 
-        <!-- ... (остальная разметка без изменений) ... -->
+        <!-- ... (остальная разметка) ... -->
     </div>
 
     <script>
-        // ... (частицы и базовые функции остаются без изменений) ...
+        // ... (частицы и базовые функции) ...
 
-        function calculateStructuralDifference(block1, block2, blockSize) {
-            // Вычисляем гистограммы для блоков
-            const hist1 = new Array(64).fill(0);
-            const hist2 = new Array(64).fill(0);
-            
-            for (let i = 0; i < block1.length; i += 4) {
-                // Квантуем цвета в 4 бита на канал (64 цвета всего)
-                const r1 = Math.floor(block1[i] / 64);
-                const g1 = Math.floor(block1[i + 1] / 64);
-                const b1 = Math.floor(block1[i + 2] / 64);
-                const colorIndex1 = (r1 << 4) | (g1 << 2) | b1;
-                
-                const r2 = Math.floor(block2[i] / 64);
-                const g2 = Math.floor(block2[i + 1] / 64);
-                const b2 = Math.floor(block2[i + 2] / 64);
-                const colorIndex2 = (r2 << 4) | (g2 << 2) | b2;
-                
-                hist1[colorIndex1]++;
-                hist2[colorIndex2]++;
-            }
-            
-            // Сравниваем гистограммы с помощью расстояния Бхаттачария
-            let similarity = 0;
-            for (let i = 0; i < 64; i++) {
-                similarity += Math.sqrt(hist1[i] * hist2[i]);
-            }
-            
-            // Нормализуем и инвертируем (1 - similarity = difference)
-            const maxSimilarity = blockSize * blockSize;
-            return 1 - (similarity / maxSimilarity);
+        function startSmartAnalysis() {
+            if (!image1 || !image2) return;
+
+            startTime = Date.now();
+            const strictness = parseInt(document.getElementById('strictness').value);
+            const minArea = parseInt(document.getElementById('min-area').value);
+
+            document.getElementById('progress-container').style.display = 'block';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            hideError();
+
+            setTimeout(() => {
+                performSmartAnalysis(strictness, minArea);
+            }, 100);
         }
 
-        function findEdges(imageData, width, height) {
-            // Простой детектор краев Sobel
-            const edges = new Uint8ClampedArray(width * height);
-            const data = imageData.data;
-            
-            for (let y = 1; y < height - 1; y++) {
-                for (let x = 1; x < width - 1; x++) {
-                    const idx = (y * width + x) * 4;
-                    
-                    // Вычисляем градиенты
-                    let gx = 0, gy = 0;
-                    
-                    for (let dy = -1; dy <= 1; dy++) {
-                        for (let dx = -1; dx <= 1; dx++) {
-                            const nidx = ((y + dy) * width + (x + dx)) * 4;
-                            const gray = 0.3 * data[nidx] + 0.59 * data[nidx + 1] + 0.11 * data[nidx + 2];
-                            
-                            gx += gray * dx;
-                            gy += gray * dy;
-                        }
-                    }
-                    
-                    // Величина градиента
-                    const magnitude = Math.sqrt(gx * gx + gy * gy);
-                    edges[y * width + x] = magnitude > 50 ? 255 : 0;
-                }
-            }
-            
-            return edges;
-        }
-
-        function analyzeImagesWithDifferences(sensitivity, blockSize, minArea) {
+        function performSmartAnalysis(strictness, minArea) {
             try {
                 updateProgress(10, 'Подготовка изображений...');
 
@@ -143,9 +87,11 @@
                 const ctx1 = canvas1.getContext('2d');
                 const ctx2 = canvas2.getContext('2d');
 
-                // Используем фиксированный размер
-                const width = 800;
-                const height = Math.floor((width / image1.naturalWidth) * image1.naturalHeight);
+                // Используем оптимальный размер
+                const maxDimension = 1000;
+                const scale = Math.min(maxDimension / image1.naturalWidth, maxDimension / image1.naturalHeight, 1);
+                const width = Math.floor(image1.naturalWidth * scale);
+                const height = Math.floor(image1.naturalHeight * scale);
 
                 canvas1.width = canvas2.width = width;
                 canvas1.height = canvas2.height = height;
@@ -154,49 +100,59 @@
                 ctx1.drawImage(image1, 0, 0, width, height);
                 ctx2.drawImage(image2, 0, 0, width, height);
 
-                updateProgress(50, 'Структурный анализ...');
+                updateProgress(50, 'Точное сравнение...');
                 
                 const imageData1 = ctx1.getImageData(0, 0, width, height);
                 const imageData2 = ctx2.getImageData(0, 0, width, height);
+                const data1 = imageData1.data;
+                const data2 = imageData2.data;
 
-                // Создаем карту различий на основе структурного анализа
+                // Создаем карту значимых различий
                 const diffMap = new Uint8ClampedArray(width * height);
-                let differentBlocks = 0;
-                const totalBlocks = Math.floor(width / blockSize) * Math.floor(height / blockSize);
+                let totalDifferences = 0;
 
-                // Анализируем блоками
-                for (let y = 0; y < height - blockSize; y += blockSize) {
-                    for (let x = 0; x < width - blockSize; x += blockSize) {
-                        const blockData1 = ctx1.getImageData(x, y, blockSize, blockSize).data;
-                        const blockData2 = ctx2.getImageData(x, y, blockSize, blockSize).data;
+                // Анализируем с учетом строгости
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const idx = (y * width + x) * 4;
                         
-                        const difference = calculateStructuralDifference(blockData1, blockData2, blockSize);
+                        const r1 = data1[idx];
+                        const g1 = data1[idx + 1];
+                        const b1 = data1[idx + 2];
                         
-                        if (difference > sensitivity) {
-                            differentBlocks++;
-                            // Помечаем весь блок как различный
-                            for (let by = 0; by < blockSize; by++) {
-                                for (let bx = 0; bx < blockSize; bx++) {
-                                    const px = x + bx;
-                                    const py = y + by;
-                                    if (px < width && py < height) {
-                                        diffMap[py * width + px] = 255;
-                                    }
-                                }
-                            }
+                        const r2 = data2[idx];
+                        const g2 = data2[idx + 1];
+                        const b2 = data2[idx + 2];
+
+                        // Вычисляем цветовую разницу (более точная формула)
+                        const diff = Math.sqrt(
+                            Math.pow(r1 - r2, 2) * 0.3 +
+                            Math.pow(g1 - g2, 2) * 0.59 +
+                            Math.pow(b1 - b2, 2) * 0.11
+                        );
+
+                        // Порог зависит от строгости
+                        const threshold = strictness * 10;
+                        
+                        if (diff > threshold) {
+                            diffMap[y * width + x] = 255;
+                            totalDifferences++;
                         }
+                    }
 
-                        updateProgress(50 + Math.floor((y * width + x) / (width * height) * 30), 
-                                    `Анализ блоков: ${Math.round((y * width + x) / (width * height) * 100)}%`);
+                    if (y % 10 === 0) {
+                        updateProgress(50 + (y / height * 30), `Сканирование: ${Math.round(y / height * 100)}%`);
                     }
                 }
 
                 updateProgress(80, 'Поиск значимых областей...');
                 
-                // Находим связные компоненты
-                differenceAreas = findConnectedComponents(diffMap, width, height, minArea);
+                // Умное объединение пикселей в области
+                const significantAreas = findSignificantAreas(diffMap, width, height, minArea);
 
-                // Создаем результат
+                updateProgress(90, 'Создание результата...');
+                
+                // Создаем визуализацию
                 const resultCanvas = document.createElement('canvas');
                 resultCanvas.width = width;
                 resultCanvas.height = height;
@@ -205,54 +161,56 @@
                 // Рисуем оригинальное изображение
                 resultCtx.drawImage(canvas1, 0, 0);
 
-                // Обводим ТОЛЬКО значимые области различий
+                // Подсвечиваем ТОЛЬКО значимые различия
                 resultCtx.strokeStyle = '#ff4757';
                 resultCtx.lineWidth = 3;
-                resultCtx.fillStyle = 'rgba(255, 71, 87, 0.1)';
-                
-                differenceAreas.forEach(area => {
+                resultCtx.fillStyle = 'rgba(255, 71, 87, 0.2)';
+                resultCtx.font = '14px Arial';
+                resultCtx.textAlign = 'center';
+
+                significantAreas.forEach((area, index) => {
                     let minX = width, minY = height, maxX = 0, maxY = 0;
-                    for (const [x, y] of area) {
+                    for (const [x, y] of area.pixels) {
                         minX = Math.min(minX, x);
                         minY = Math.min(minY, y);
                         maxX = Math.max(maxX, x);
                         maxY = Math.max(maxY, y);
                     }
-                    
-                    // Рисуем только если область достаточно большая
-                    if ((maxX - minX) * (maxY - minY) >= minArea) {
-                        resultCtx.beginPath();
-                        resultCtx.rect(minX, minY, maxX - minX, maxY - minY);
-                        resultCtx.stroke();
-                        resultCtx.fill();
-                    }
+
+                    // Рисуем bounding box
+                    resultCtx.beginPath();
+                    resultCtx.rect(minX, minY, maxX - minX, maxY - minY);
+                    resultCtx.stroke();
+                    resultCtx.fill();
+
+                    // Добавляем номер области
+                    resultCtx.fillStyle = 'white';
+                    resultCtx.fillText((index + 1).toString(), minX + (maxX - minX) / 2, minY - 5);
+                    resultCtx.fillStyle = 'rgba(255, 71, 87, 0.2)';
                 });
 
-                updateProgress(95, 'Расчет точности...');
-
+                // Вычисляем реальную схожесть
                 const totalPixels = width * height;
-                const changedPixels = diffMap.reduce((sum, val) => sum + (val === 255 ? 1 : 0), 0);
+                const changedPixels = significantAreas.reduce((sum, area) => sum + area.size, 0);
                 const similarity = ((totalPixels - changedPixels) / totalPixels) * 100;
                 const similarityRounded = Math.max(0, Math.min(100, Math.round(similarity * 10) / 10));
-                const analysisTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
                 analysisResult = {
                     similarity: similarityRounded,
                     diffCanvas: resultCanvas,
                     totalPixels: totalPixels,
                     changedPixels: changedPixels,
-                    areasCount: differenceAreas.length,
-                    analysisTime: analysisTime,
-                    resolution: `${width}×${height}px`,
-                    differentBlocks: differentBlocks,
-                    totalBlocks: totalBlocks
+                    areasCount: significantAreas.length,
+                    areas: significantAreas,
+                    analysisTime: ((Date.now() - startTime) / 1000).toFixed(1),
+                    resolution: `${width}×${height}px`
                 };
 
                 updateProgress(100, 'Анализ завершен!');
                 
                 setTimeout(() => {
                     document.getElementById('progress-container').style.display = 'none';
-                    displayResult();
+                    displaySmartResults();
                 }, 500);
 
             } catch (error) {
@@ -263,44 +221,121 @@
             }
         }
 
-        function displayResult() {
+        function findSignificantAreas(diffMap, width, height, minArea) {
+            const visited = new Array(width * height).fill(false);
+            const areas = [];
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = y * width + x;
+                    
+                    if (diffMap[idx] === 255 && !visited[idx]) {
+                        const area = {
+                            pixels: [],
+                            size: 0
+                        };
+                        
+                        const queue = [[x, y]];
+                        visited[idx] = true;
+
+                        while (queue.length > 0) {
+                            const [cx, cy] = queue.shift();
+                            area.pixels.push([cx, cy]);
+                            area.size++;
+
+                            // Проверяем соседей
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    if (dx === 0 && dy === 0) continue;
+                                    
+                                    const nx = cx + dx;
+                                    const ny = cy + dy;
+                                    
+                                    if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                        const nidx = ny * width + nx;
+                                        if (diffMap[nidx] === 255 && !visited[nidx]) {
+                                            visited[nidx] = true;
+                                            queue.push([nx, ny]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Добавляем только значимые области
+                        if (area.size >= minArea) {
+                            areas.push(area);
+                        }
+                    }
+                }
+            }
+
+            return areas;
+        }
+
+        function displaySmartResults() {
             if (!analysisResult) return;
 
-            // ... (остальная функция displayResult без изменений) ...
+            const similarityScore = document.getElementById('similarity-score');
+            const verdict = document.getElementById('verdict');
+            const diffCanvas = document.getElementById('diff-canvas');
+            const detailedStats = document.getElementById('detailed-stats');
+            const statPixels = document.getElementById('stat-pixels');
+            const statDiff = document.getElementById('stat-diff');
+            const statAreas = document.getElementById('stat-areas');
 
+            similarityScore.textContent = analysisResult.similarity + '%';
+            statPixels.textContent = analysisResult.totalPixels.toLocaleString();
+            statDiff.textContent = analysisResult.changedPixels.toLocaleString();
+            statAreas.textContent = analysisResult.areasCount;
+            
+            // Более точная оценка схожести
+            let verdictText = '';
+            let verdictClass = '';
+            
+            if (analysisResult.similarity >= 95) {
+                verdictText = '🎉 ПОЧТИ ИДЕНТИЧНЫЕ';
+                verdictClass = 'low-similarity';
+            } else if (analysisResult.similarity >= 80) {
+                verdictText = '✅ ВЫСОКАЯ СХОЖЕСТЬ';
+                verdictClass = 'low-similarity';
+            } else if (analysisResult.similarity >= 60) {
+                verdictText = '⚠️ СРЕДНЯЯ СХОЖЕСТЬ';
+                verdictClass = 'medium-similarity';
+            } else if (analysisResult.similarity >= 40) {
+                verdictText = '🔍 ЗАМЕТНЫЕ РАЗЛИЧИЯ';
+                verdictClass = 'medium-similarity';
+            } else {
+                verdictText = '❌ ЗНАЧИТЕЛЬНЫЕ ОТЛИЧИЯ';
+                verdictClass = 'high-similarity';
+            }
+
+            similarityScore.className = 'similarity-score ' + verdictClass;
+            verdict.textContent = verdictText;
+            verdict.className = 'verdict ' + verdictClass;
+
+            // Отображаем результат
+            const ctx = diffCanvas.getContext('2d');
+            diffCanvas.width = analysisResult.diffCanvas.width;
+            diffCanvas.height = analysisResult.diffCanvas.height;
+            ctx.drawImage(analysisResult.diffCanvas, 0, 0);
+
+            // Детальная статистика
             detailedStats.innerHTML = `
-                <p><strong>Разрешение анализа:</strong> ${analysisResult.resolution}</p>
-                <p><strong>Всего пикселей:</strong> ${analysisResult.totalPixels.toLocaleString()}</p>
-                <p><strong>Измененные пиксели:</strong> ${analysisResult.changedPixels.toLocaleString()}</p>
-                <p><strong>Различные блоки:</strong> ${analysisResult.differentBlocks}/${analysisResult.totalBlocks}</p>
+                <p><strong>Качество анализа:</strong> ${analysisResult.resolution}</p>
+                <p><strong>Всего проанализировано:</strong> ${analysisResult.totalPixels.toLocaleString()} пикселей</p>
+                <p><strong>Значимые различия:</strong> ${analysisResult.changedPixels.toLocaleString()} пикселей</p>
                 <p><strong>Областей различий:</strong> ${analysisResult.areasCount}</p>
-                <p><strong>Процент схожести:</strong> ${analysisResult.similarity.toFixed(2)}%</p>
-                <p><strong>Время обработки:</strong> ${analysisResult.analysisTime} секунд</p>
-                <p><strong>Метод:</strong> Структурный анализ блоков</p>
+                <p><strong>Реальная схожесть:</strong> ${analysisResult.similarity.toFixed(2)}%</p>
+                <p><strong>Время анализа:</strong> ${analysisResult.analysisTime} сек</p>
+                <p><strong>Настройки:</strong> Строгость ${document.getElementById('strictness-value').textContent}, Минимальная область ${document.getElementById('min-area-value').textContent}px²</p>
             `;
 
-            // ... (остальная функция без изменений) ...
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
         }
 
-        function startAnalysis() {
-            if (!image1 || !image2) return;
-
-            startTime = Date.now();
-            const sensitivity = parseInt(document.getElementById('sensitivity').value) / 100;
-            const blockSize = parseInt(document.getElementById('block-size').value);
-            const minArea = parseInt(document.getElementById('min-area').value);
-
-            document.getElementById('progress-container').style.display = 'block';
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').style.display = 'none';
-            hideError();
-
-            setTimeout(() => {
-                analyzeImagesWithDifferences(sensitivity, blockSize, minArea);
-            }, 100);
-        }
-
-        // ... (остальные функции без изменений) ...
+        // ... (остальные функции) ...
     </script>
 </body>
 </html>
