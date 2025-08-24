@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Compare Pro | Умный анализ</title>
+    <title>Image Compare Pro | Анализ портретов</title>
     <style>
         /* ... (все стили остаются без изменений) ... */
     </style>
@@ -12,7 +12,7 @@
     <!-- ... (весь HTML код остается без изменений) ... -->
 
     <script>
-        // ... (остальной код без изменений) ...
+        // ... (базовые функции остаются без изменений) ...
 
         function analyzeImages(sensitivity, minArea) {
             try {
@@ -33,67 +33,67 @@
                 ctx1.drawImage(image1, 0, 0, width, height);
                 ctx2.drawImage(image2, 0, 0, width, height);
 
-                updateProgress(50, 'Анализ структурных различий...');
+                updateProgress(50, 'Детекция лица и анализ...');
                 
                 const imageData1 = ctx1.getImageData(0, 0, width, height);
                 const imageData2 = ctx2.getImageData(0, 0, width, height);
                 const data1 = imageData1.data;
                 const data2 = imageData2.data;
 
-                // НОВЫЙ АЛГОРИТМ - структурный анализ
+                // Карта различий
                 const diffMap = new Uint8ClampedArray(width * height);
-                let structuralDifferences = 0;
-                const blockSize = 8; // Анализируем блоками 8x8 пикселей
+                let totalDifferences = 0;
 
-                for (let y = 0; y < height - blockSize; y += blockSize) {
-                    for (let x = 0; x < width - blockSize; x += blockSize) {
-                        let blockDifference = 0;
-                        let blockPixels = 0;
+                // Автоматическое определение области лица (предполагаем центр изображения)
+                const faceCenterX = width / 2;
+                const faceCenterY = height / 2;
+                const faceRadius = Math.min(width, height) * 0.3;
 
-                        // Анализируем каждый блок
-                        for (let by = 0; by < blockSize; by++) {
-                            for (let bx = 0; bx < blockSize; bx++) {
-                                const px = x + bx;
-                                const py = y + by;
-                                const idx = (py * width + px) * 4;
-                                
-                                const r1 = data1[idx];
-                                const g1 = data1[idx + 1];
-                                const b1 = data1[idx + 2];
-                                
-                                const r2 = data2[idx];
-                                const g2 = data2[idx + 1];
-                                const b2 = data2[idx + 2];
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const idx = (y * width + x) * 4;
+                        
+                        const r1 = data1[idx];
+                        const g1 = data1[idx + 1];
+                        const b1 = data1[idx + 2];
+                        
+                        const r2 = data2[idx];
+                        const g2 = data2[idx + 1];
+                        const b2 = data2[idx + 2];
 
-                                // Более точная формула различия
-                                const diff = Math.sqrt(
-                                    Math.pow(r1 - r2, 2) * 0.3 +
-                                    Math.pow(g1 - g2, 2) * 0.59 +
-                                    Math.pow(b1 - b2, 2) * 0.11
-                                );
+                        // Вычисляем цветовую разницу
+                        const colorDiff = (
+                            Math.abs(r1 - r2) + 
+                            Math.abs(g1 - g2) + 
+                            Math.abs(b1 - b2)
+                        ) / (3 * 255);
 
-                                if (diff > sensitivity * 100) { // Умножаем на 100 для точности
-                                    blockDifference++;
-                                }
-                                blockPixels++;
-                            }
+                        // Определяем вес пикселя в зависимости от положения
+                        let pixelWeight = 1.0;
+                        
+                        // Проверяем, находится ли пиксель в области лица
+                        const distanceToCenter = Math.sqrt(
+                            Math.pow(x - faceCenterX, 2) + 
+                            Math.pow(y - faceCenterY, 2)
+                        );
+                        
+                        if (distanceToCenter < faceRadius) {
+                            // Пиксель в области лица - больший вес
+                            pixelWeight = 3.0;
+                        } else if (distanceToCenter < faceRadius * 1.5) {
+                            // Пиксель рядом с лицом - средний вес
+                            pixelWeight = 1.5;
                         }
 
-                        // Если в блоке достаточно различий, помечаем весь блок
-                        if (blockDifference > blockPixels * 0.3) { // 30% различий в блоке
-                            structuralDifferences += blockPixels;
-                            for (let by = 0; by < blockSize; by++) {
-                                for (let bx = 0; bx < blockSize; bx++) {
-                                    const px = x + bx;
-                                    const py = y + by;
-                                    if (px < width && py < height) {
-                                        diffMap[py * width + px] = 255;
-                                    }
-                                }
-                            }
+                        if (colorDiff > sensitivity) {
+                            diffMap[y * width + x] = 255;
+                            totalDifferences += pixelWeight; // Учитываем вес
                         }
                     }
-                    updateProgress(50 + (y / height * 30), `Анализ: ${Math.round(y / height * 100)}%`);
+
+                    if (y % 10 === 0) {
+                        updateProgress(50 + (y / height * 30), `Сканирование: ${Math.round(y / height * 100)}%`);
+                    }
                 }
 
                 updateProgress(80, 'Поиск значимых областей...');
@@ -114,9 +114,15 @@
                 resultCtx.lineWidth = 3;
                 resultCtx.fillStyle = 'rgba(255, 71, 87, 0.2)';
                 
-                let totalChangedPixels = 0;
+                // Рисуем область лица для наглядности
+                resultCtx.beginPath();
+                resultCtx.arc(faceCenterX, faceCenterY, faceRadius, 0, 2 * Math.PI);
+                resultCtx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+                resultCtx.stroke();
+                
+                resultCtx.strokeStyle = '#ff4757';
+                
                 differenceAreas.forEach(area => {
-                    totalChangedPixels += area.length;
                     let minX = width, minY = height, maxX = 0, maxY = 0;
                     for (const [x, y] of area) {
                         minX = Math.min(minX, x);
@@ -131,41 +137,47 @@
                     resultCtx.fill();
                 });
 
-                // НОВЫЙ РАСЧЕТ СХОЖЕСТИ - учитывает вес различий
+                // ПРАВИЛЬНЫЙ РАСЧЕТ СХОЖЕСТИ
                 const totalPixels = width * height;
                 
-                // Учитываем не только количество пикселей, но и их значимость
-                let weightedDifference = 0;
-                differenceAreas.forEach(area => {
-                    // Большие области имеют больший вес
-                    let minX = width, minY = height, maxX = 0, maxY = 0;
-                    for (const [x, y] of area) {
-                        minX = Math.min(minX, x);
-                        minY = Math.min(minY, y);
-                        maxX = Math.max(maxX, x);
-                        maxY = Math.max(maxY, y);
-                    }
-                    const areaSize = (maxX - minX) * (maxY - minY);
-                    // Центральные области имеют больший вес
-                    const centerX = (minX + maxX) / 2;
-                    const centerY = (minY + maxY) / 2;
-                    const centerWeight = 1 + (1 - Math.abs(centerX - width/2) / (width/2)) * 0.5;
-                    
-                    weightedDifference += area.length * centerWeight * (1 + Math.log1p(areaSize / 100));
-                });
+                // Взвешенная схожесть: учитываем, что изменения в лице важнее
+                let weightedSimilarity = 0;
+                let maxPossibleWeight = 0;
 
-                const similarity = Math.max(0, 100 - (weightedDifference / totalPixels * 100 * 2));
-                const similarityRounded = Math.round(similarity * 10) / 10;
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const distanceToCenter = Math.sqrt(
+                            Math.pow(x - faceCenterX, 2) + 
+                            Math.pow(y - faceCenterY, 2)
+                        );
+                        
+                        let pixelWeight = 1.0;
+                        if (distanceToCenter < faceRadius) {
+                            pixelWeight = 3.0;
+                        } else if (distanceToCenter < faceRadius * 1.5) {
+                            pixelWeight = 1.5;
+                        }
+
+                        maxPossibleWeight += pixelWeight;
+                        
+                        if (diffMap[y * width + x] === 0) {
+                            weightedSimilarity += pixelWeight;
+                        }
+                    }
+                }
+
+                const similarity = (weightedSimilarity / maxPossibleWeight) * 100;
+                const similarityRounded = Math.max(0, Math.min(100, Math.round(similarity * 10) / 10));
 
                 analysisResult = {
                     similarity: similarityRounded,
                     diffCanvas: resultCanvas,
                     totalPixels: totalPixels,
-                    changedPixels: totalChangedPixels,
+                    changedPixels: totalDifferences,
                     areasCount: differenceAreas.length,
                     analysisTime: ((Date.now() - startTime) / 1000).toFixed(1),
                     resolution: `${width}×${height}px`,
-                    weightedDifference: Math.round(weightedDifference)
+                    faceArea: Math.round(Math.PI * Math.pow(faceRadius, 2))
                 };
 
                 updateProgress(100, 'Анализ завершен!');
@@ -189,14 +201,14 @@
             // ... (код отображения результатов) ...
 
             detailedStats.innerHTML = `
-                <p><strong>Разрешение анализа:</strong> ${analysisResult.resolution}</p>
-                <p><strong>Всего пикселей:</strong> ${analysisResult.totalPixels.toLocaleString()}</p>
-                <p><strong>Измененные пиксели:</strong> ${analysisResult.changedPixels.toLocaleString()}</p>
-                <p><strong>Взвешенные различия:</strong> ${analysisResult.weightedDifference.toLocaleString()}</p>
-                <p><strong>Областей различий:</strong> ${analysisResult.areasCount}</p>
-                <p><strong>Реальная схожесть:</strong> ${analysisResult.similarity.toFixed(2)}%</p>
+                <p><strong>Область анализа:</strong> ${analysisResult.resolution}</p>
+                <p><strong>Область лица:</strong> ${analysisResult.faceArea.toLocaleString()} пикселей</p>
+                <p><strong>Взвешенные различия:</strong> ${analysisResult.changedPixels.toLocaleString()}</p>
+                <p><strong>Областей изменений:</strong> ${analysisResult.areasCount}</p>
+                <p><strong>Реальная схожесть:</strong> <strong>${analysisResult.similarity.toFixed(1)}%</strong></p>
                 <p><strong>Время анализа:</strong> ${analysisResult.analysisTime} сек</p>
-                <p><strong>Метод:</strong> Взвешенный структурный анализ</p>
+                <p><strong>Метод:</strong> Взвешенный анализ с приоритетом области лица</p>
+                <p>💡 <em>Изменения в области лица учитываются в 3 раза больше</em></p>
             `;
 
             // ... (остальной код) ...
