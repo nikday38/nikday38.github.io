@@ -162,12 +162,14 @@
             font-weight: 600;
             margin-bottom: 15px;
             color: #2c3e50;
+            text-align: center;
         }
         
         .upload-box p {
             color: #7f8c8d;
             font-size: 1.1em;
             margin-bottom: 25px;
+            text-align: center;
         }
         
         .preview-container {
@@ -638,7 +640,54 @@
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); box-shadow: 0 30px 70px rgba(0, 184, 148, 0.5); }
         }
+
+        /* Стили для обводки различий */
+        .difference-highlight {
+            position: absolute;
+            border: 3px solid #ff4757;
+            border-radius: 8px;
+            background: rgba(255, 71, 87, 0.1);
+            pointer-events: none;
+            z-index: 10;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.5);
+        }
         
+        @keyframes pulse {
+            0%, 100% { 
+                border-color: #ff4757;
+                box-shadow: 0 0 20px rgba(255, 71, 87, 0.5);
+            }
+            50% { 
+                border-color: #ff6b81;
+                box-shadow: 0 0 30px rgba(255, 107, 129, 0.8);
+            }
+        }
+        
+        .difference-label {
+            position: absolute;
+            background: #ff4757;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            transform: translateY(-100%);
+            white-space: nowrap;
+            animation: floatLabel 3s infinite;
+        }
+        
+        @keyframes floatLabel {
+            0%, 100% { transform: translateY(-100%) translateX(0); }
+            50% { transform: translateY(-120%) translateX(5px); }
+        }
+
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
         /* Адаптивность */
         @media (max-width: 768px) {
             .container {
@@ -676,7 +725,7 @@
     <div class="container">
         <div class="header">
             <h1>🔍 Copyright Vision Pro</h1>
-            <p>Профессиональный анализ изображений с искусственным интеллектом</p>
+            <p>Профессиональный анализ изображений с выделением различий</p>
         </div>
 
         <div class="main-content">
@@ -723,11 +772,11 @@
 
             <div class="slider-container">
                 <label>
-                    Качество анализа: <span class="slider-value" id="scale-value">0.5</span>
+                    Минимальный размер области: <span class="slider-value" id="min-area-value">50</span>px²
                 </label>
-                <input type="range" id="scale" min="0.1" max="1" step="0.1" value="0.5" onchange="updateSliderValue('scale', 'scale-value')">
+                <input type="range" id="min-area" min="10" max="200" value="50" onchange="updateSliderValue('min-area', 'min-area-value')">
                 <div style="color: rgba(255,255,255,0.8); font-size: 0.9em; margin-top: 10px;">
-                    Выше качество = дольше обработка
+                    Игнорировать мелкие различия
                 </div>
             </div>
 
@@ -776,16 +825,18 @@
                             <div class="stat-label">Найдено отличий</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value" id="stat-time">0</div>
-                            <div class="stat-label">Время анализа</div>
+                            <div class="stat-value" id="stat-areas">0</div>
+                            <div class="stat-label">Области различий</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="result-card">
                     <h3>👁️ Визуализация отличий</h3>
-                    <canvas id="diff-canvas" class="diff-canvas"></canvas>
-                    <div class="image-info">Области различий выделены цветом</div>
+                    <div class="canvas-container" id="canvas-container">
+                        <canvas id="diff-canvas" class="diff-canvas"></canvas>
+                    </div>
+                    <div class="image-info">Красные рамки показывают области различий</div>
                 </div>
             </div>
 
@@ -832,11 +883,11 @@
         // Инициализация
         createParticles();
         
-        // Остальной код анализа (остается без изменений)
         let image1 = null;
         let image2 = null;
         let analysisResult = null;
         let startTime = 0;
+        let differenceAreas = [];
 
         function updateSliderValue(sliderId, valueId) {
             const slider = document.getElementById(sliderId);
@@ -901,12 +952,54 @@
             document.getElementById('progress-text').textContent = text;
         }
 
+        function findConnectedComponents(diffMap, width, height, minArea) {
+            const visited = new Array(width * height).fill(false);
+            const components = [];
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = y * width + x;
+                    if (diffMap[idx] === 255 && !visited[idx]) {
+                        const component = [];
+                        const queue = [[x, y]];
+                        visited[idx] = true;
+                        
+                        while (queue.length > 0) {
+                            const [cx, cy] = queue.shift();
+                            component.push([cx, cy]);
+                            
+                            // 4-связные соседи
+                            const neighbors = [[0,1],[1,0],[0,-1],[-1,0]];
+                            for (const [dx, dy] of neighbors) {
+                                const nx = cx + dx;
+                                const ny = cy + dy;
+                                
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    const nidx = ny * width + nx;
+                                    if (diffMap[nidx] === 255 && !visited[nidx]) {
+                                        visited[nidx] = true;
+                                        queue.push([nx, ny]);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (component.length >= minArea) {
+                            components.push(component);
+                        }
+                    }
+                }
+            }
+            
+            return components;
+        }
+
         function startAnalysis() {
             if (!image1 || !image2) return;
 
             startTime = Date.now();
             const sensitivity = parseInt(document.getElementById('sensitivity').value) / 100;
-            const scale = parseFloat(document.getElementById('scale').value);
+            const minArea = parseInt(document.getElementById('min-area').value);
 
             document.getElementById('progress-container').style.display = 'block';
             document.getElementById('loading').style.display = 'block';
@@ -914,11 +1007,11 @@
             hideError();
 
             setTimeout(() => {
-                analyzeImagesSafe(sensitivity, scale);
+                analyzeImagesWithDifferences(sensitivity, minArea);
             }, 100);
         }
 
-        function analyzeImagesSafe(sensitivity, scale) {
+        function analyzeImagesWithDifferences(sensitivity, minArea) {
             try {
                 updateProgress(10, 'Подготовка изображений...');
 
@@ -927,16 +1020,9 @@
                 const ctx1 = canvas1.getContext('2d');
                 const ctx2 = canvas2.getContext('2d');
 
-                const maxSafePixels = 1000000;
-                const originalPixels = image1.naturalWidth * image1.naturalHeight;
-                
-                let safeScale = scale;
-                if (originalPixels * scale * scale > maxSafePixels) {
-                    safeScale = Math.sqrt(maxSafePixels / originalPixels);
-                }
-
-                const width = Math.max(100, Math.min(2000, Math.floor(image1.naturalWidth * safeScale)));
-                const height = Math.max(100, Math.min(2000, Math.floor(image1.naturalHeight * safeScale)));
+                // Используем фиксированный размер для производительности
+                const width = 800;
+                const height = Math.floor((width / image1.naturalWidth) * image1.naturalHeight);
 
                 canvas1.width = canvas2.width = width;
                 canvas1.height = canvas2.height = height;
@@ -945,60 +1031,79 @@
                 ctx1.drawImage(image1, 0, 0, width, height);
                 ctx2.drawImage(image2, 0, 0, width, height);
 
-                updateProgress(50, 'Сравнение пикселей...');
+                updateProgress(50, 'Поиск различий...');
                 
+                const imageData1 = ctx1.getImageData(0, 0, width, height);
+                const imageData2 = ctx2.getImageData(0, 0, width, height);
+                const data1 = imageData1.data;
+                const data2 = imageData2.data;
+
+                // Создаем карту различий
+                const diffMap = new Uint8ClampedArray(width * height);
+                let differentPixels = 0;
+
+                for (let i = 0; i < data1.length; i += 4) {
+                    const pixelIndex = i / 4;
+                    
+                    const r1 = data1[i];
+                    const g1 = data1[i + 1];
+                    const b1 = data1[i + 2];
+                    
+                    const r2 = data2[i];
+                    const g2 = data2[i + 1];
+                    const b2 = data2[i + 2];
+
+                    const colorDiff = (
+                        Math.abs(r1 - r2) + 
+                        Math.abs(g1 - g2) + 
+                        Math.abs(b1 - b2)
+                    ) / (3 * 255);
+
+                    if (colorDiff > sensitivity) {
+                        diffMap[pixelIndex] = 255;
+                        differentPixels++;
+                    }
+                }
+
+                updateProgress(70, 'Поиск областей различий...');
+                
+                // Находим связные компоненты
+                differenceAreas = findConnectedComponents(diffMap, width, height, minArea);
+
+                // Создаем результат с обводкой различий
                 const resultCanvas = document.createElement('canvas');
                 resultCanvas.width = width;
                 resultCanvas.height = height;
                 const resultCtx = resultCanvas.getContext('2d');
+                
+                // Рисуем оригинальное изображение
                 resultCtx.drawImage(canvas1, 0, 0);
 
-                let differentPixels = 0;
+                // Обводим области различий
+                resultCtx.strokeStyle = '#ff4757';
+                resultCtx.lineWidth = 3;
+                resultCtx.fillStyle = 'rgba(255, 71, 87, 0.1)';
+                
+                differenceAreas.forEach(area => {
+                    // Находим bounding box для области
+                    let minX = width, minY = height, maxX = 0, maxY = 0;
+                    for (const [x, y] of area) {
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    }
+                    
+                    // Рисуем прямоугольник вокруг области
+                    resultCtx.beginPath();
+                    resultCtx.rect(minX, minY, maxX - minX, maxY - minY);
+                    resultCtx.stroke();
+                    resultCtx.fill();
+                });
+
+                updateProgress(90, 'Завершение анализа...');
+
                 const totalPixels = width * height;
-
-                for (let y = 0; y < height; y++) {
-                    const imageData1 = ctx1.getImageData(0, y, width, 1);
-                    const imageData2 = ctx2.getImageData(0, y, width, 1);
-                    const data1 = imageData1.data;
-                    const data2 = imageData2.data;
-
-                    for (let i = 0; i < data1.length; i += 4) {
-                        const r1 = data1[i];
-                        const g1 = data1[i + 1];
-                        const b1 = data1[i + 2];
-                        
-                        const r2 = data2[i];
-                        const g2 = data2[i + 1];
-                        const b2 = data2[i + 2];
-
-                        const colorDiff = (
-                            Math.abs(r1 - r2) + 
-                            Math.abs(g1 - g2) + 
-                            Math.abs(b1 - b2)
-                        ) / (3 * 255);
-
-                        if (colorDiff > sensitivity) {
-                            differentPixels++;
-                        }
-                    }
-
-                    if (y % 10 === 0) {
-                        const progress = 50 + Math.floor((y / height) * 40);
-                        updateProgress(progress, `Обработано: ${Math.round((y / height) * 100)}%`);
-                    }
-                }
-
-                // Создаем красивую визуализацию
-                resultCtx.drawImage(canvas1, 0, 0);
-                resultCtx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-                resultCtx.fillRect(width/2 - 150, height/2 - 20, 300, 40);
-                resultCtx.fillStyle = 'white';
-                resultCtx.font = 'bold 20px Montserrat';
-                resultCtx.textAlign = 'center';
-                resultCtx.fillText(`Найдено ${differentPixels} различий`, width/2, height/2 + 5);
-
-                updateProgress(95, 'Завершение анализа...');
-
                 const similarity = ((totalPixels - differentPixels) / totalPixels) * 100;
                 const similarityRounded = Math.max(0, Math.min(100, Math.round(similarity * 10) / 10));
                 const analysisTime = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -1008,6 +1113,7 @@
                     diffCanvas: resultCanvas,
                     totalPixels: totalPixels,
                     changedPixels: differentPixels,
+                    areasCount: differenceAreas.length,
                     analysisTime: analysisTime,
                     resolution: `${width}×${height}px`
                 };
@@ -1036,12 +1142,12 @@
             const detailedStats = document.getElementById('detailed-stats');
             const statPixels = document.getElementById('stat-pixels');
             const statDiff = document.getElementById('stat-diff');
-            const statTime = document.getElementById('stat-time');
+            const statAreas = document.getElementById('stat-areas');
 
             similarityScore.textContent = analysisResult.similarity + '%';
             statPixels.textContent = analysisResult.totalPixels.toLocaleString();
             statDiff.textContent = analysisResult.changedPixels.toLocaleString();
-            statTime.textContent = analysisResult.analysisTime + 's';
+            statAreas.textContent = analysisResult.areasCount;
             
             let verdictText = '';
             let verdictClass = '';
@@ -1061,18 +1167,22 @@
             verdict.textContent = verdictText;
             verdict.className = 'verdict ' + verdictClass;
 
+            // Рисуем результат с обводкой
             const ctx = diffCanvas.getContext('2d');
             diffCanvas.width = analysisResult.diffCanvas.width;
             diffCanvas.height = analysisResult.diffCanvas.height;
             ctx.drawImage(analysisResult.diffCanvas, 0, 0);
 
+            // Добавляем интерактивные подсказки
+            addDifferenceHighlights();
+
             detailedStats.innerHTML = `
                 <p><strong>Разрешение анализа:</strong> ${analysisResult.resolution}</p>
                 <p><strong>Общее количество пикселей:</strong> ${analysisResult.totalPixels.toLocaleString()}</p>
                 <p><strong>Обнаружено различий:</strong> ${analysisResult.changedPixels.toLocaleString()} пикселей</p>
+                <p><strong>Областей различий:</strong> ${analysisResult.areasCount}</p>
                 <p><strong>Процент схожести:</strong> ${analysisResult.similarity.toFixed(2)}%</p>
                 <p><strong>Время обработки:</strong> ${analysisResult.analysisTime} секунд</p>
-                <p><strong>Чувствительность:</strong> ${document.getElementById('sensitivity-value').textContent}%</p>
             `;
 
             document.getElementById('result').style.display = 'block';
@@ -1085,10 +1195,42 @@
             }, 2000);
         }
 
+        function addDifferenceHighlights() {
+            const container = document.getElementById('canvas-container');
+            const canvas = document.getElementById('diff-canvas');
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            // Очищаем предыдущие подсветки
+            container.querySelectorAll('.difference-highlight').forEach(el => el.remove());
+
+            // Добавляем новые подсветки
+            differenceAreas.forEach((area, index) => {
+                let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
+                for (const [x, y] of area) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+
+                const highlight = document.createElement('div');
+                highlight.className = 'difference-highlight';
+                highlight.style.left = (minX / scaleX) + 'px';
+                highlight.style.top = (minY / scaleY) + 'px';
+                highlight.style.width = ((maxX - minX) / scaleX) + 'px';
+                highlight.style.height = ((maxY - minY) / scaleY) + 'px';
+                
+                container.appendChild(highlight);
+            });
+        }
+
         function resetAnalysis() {
             image1 = null;
             image2 = null;
             analysisResult = null;
+            differenceAreas = [];
             document.getElementById('preview1').innerHTML = '<div style="color: #7f8c8d; font-size: 1.2em;">Изображение не выбрано</div>';
             document.getElementById('preview2').innerHTML = '<div style="color: #7f8c8d; font-size: 1.2em;">Изображение не выбрано</div>';
             document.getElementById('info1').style.display = 'none';
